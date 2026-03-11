@@ -1,0 +1,55 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+Makefile
+*.ninja
+.ninja_*
+
+# Compiled objects and binaries
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+MP3Player
+
+# Qt generated files
+*_autogen/
+*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+.qmake.stash
+
+# IDE - CLion/IntelliJ
+.idea/
+
+# IDE - VS Code
+.vscode/
+
+# IDE - Qt Creator
+*.pro.user
+*.pro.user.*
+CMakeLists.txt.user
+
+# Claude Code
+.claude/
+.cache/
+
+# Internal docs
+docs/
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+Testing/
+CTestTestfile.cmake
