@@ -44,8 +44,25 @@ ftxui::Component CreateFileManager(ILibraryService& service,
     albums->empty() ? std::vector<std::string>{} : (*songs_per_album)[0]
   );
 
-  auto album_menu = Menu(albums.get(), selected_album.get());
-  auto song_menu  = Menu(current_songs.get(), selected_song.get());
+  auto albumOpt = MenuOption();
+  albumOpt.entries_option.transform = [](const EntryState& state) {
+    auto label = text("\u25B8 " + state.label); 
+    if (state.focused) {
+      return label | bold | inverted;
+    }
+    return label | bold | dim;
+  };
+  auto album_menu = Menu(albums.get(), selected_album.get(), albumOpt);
+
+  auto songOpt = MenuOption();
+  songOpt.entries_option.transform = [](const EntryState& state) {
+    auto label = text("\u266A " + state.label);
+    if (state.focused) {
+      return label | inverted;
+    }
+    return label;
+  };
+  auto song_menu  = Menu(current_songs.get(), selected_song.get(), songOpt);
 
   auto scrollable_album_menu = WithMouseScroll(album_menu, selected_album.get(), albums.get());
   auto scrollable_song_menu  = WithMouseScroll(song_menu, selected_song.get(), current_songs.get());
