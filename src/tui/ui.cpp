@@ -10,7 +10,7 @@
 #include <set>
 
 #include "FileManager.h"
-#include "Visuals.h"
+// #include "Visuals.h"  // TODO: re-enable when visuals are implemented
 #include "PlayingBar.h"
 #include "UserInputs.h"
 #include "../library/MusicLibrary.h"
@@ -55,12 +55,12 @@ int main() {
 
   auto screen = ScreenInteractive::Fullscreen();
   auto file_manager = CreateFileManager(service, reload_flag);
-  auto visuals      = CreateVisuals();
+  // auto visuals      = CreateVisuals();  // TODO: re-enable when visuals are implemented
   auto playing_bar  = CreatePlayingBar(service, reload_flag);
   auto user_inputs  = CreateUserInputs(service, config, reload_flag);
 
   auto layout = Container::Vertical({
-    Container::Horizontal({file_manager, visuals}),
+    file_manager,
     playing_bar,
     user_inputs,
   });
@@ -69,7 +69,6 @@ int main() {
     return hbox({
       file_manager->Render() | size(WIDTH, EQUAL, 100) | flex_grow | yflex,
       vbox({
-        visuals->Render() | size(HEIGHT, EQUAL, 40) | flex_grow,
         playing_bar->Render() | size(HEIGHT, EQUAL, 30) | flex_grow,
         user_inputs->Render() | size(HEIGHT, EQUAL, 10) | flex_grow,
       }) | size(WIDTH, EQUAL, 300) | flex_grow | yflex,
