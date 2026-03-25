@@ -1,9 +1,140 @@
 #include "Visuals.h"
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+#include <vector>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/canvas.hpp>
 
-ftxui::Component CreateVisuals() {
+#include "../service/ILibraryService.h"
+#include "Palette.h"
+
+ftxui::Component CreateVisuals(ILibraryService& service) {
   using namespace ftxui;
-  return Renderer([] {
-    return text("visuals") | center | border | flex;
+
+  auto displayMags = std::make_shared<std::vector<float>>();
+  auto runningPeak = std::make_shared<float>(0.001f);
+
+  // Pre compute logarithmic bin mapping (done once per resize)
+  auto logBins = std::make_shared<std::vector<float>>();
+  auto lastWidth = std::make_shared<int>(0);
+
+  return Renderer([&service, displayMags, runningPeak, logBins, lastWidth] {
+    auto mags = service.getSpectrumMagnitudes();
+    if (mags.empty()) {
+      return text("") | flex;
+    }
+
+    // Smooth the magnitudes
+    if (displayMags->size() != mags.size()) {
+      displayMags->assign(mags.size(), 0.f);
+    }
+    for (size_t i = 0; i < mags.size(); ++i) {
+      float& cur = (*displayMags)[i];
+      float tgt = mags[i];
+      if (tgt > cur) {
+        cur += (tgt - cur) * 0.3f;
+      } else {
+        cur += (tgt - cur) * 0.12f;
+      }
+    }
+
+    // Adaptive normalization
+    float framePeak = *std::max_element(displayMags->begin(), displayMags->end());
+    if (framePeak > *runningPeak) {
+      *runningPeak = framePeak;
+    } else {
+      *runningPeak += (framePeak - *runningPeak) * 0.01f;
+    }
+    float normFactor = 1.0f / std::max(*runningPeak, 0.001f);
+
+    const auto& gradient = Palette::getCurrentGradient();
+
+    return canvas([&gradient, curMags = *displayMags, normFactor,
+                   logBins, lastWidth](Canvas& c) {
+      int w = c.width();
+      int h = c.height();
+      if (w <= 0 || h <= 0) return;
+
+      int centerY = h / 2;
+      int binCount = (int)curMags.size();
+      if (binCount < 2) return;
+
+      // Rebuild logarithmic bin lookup when width changes
+      int usableBins = binCount / 2;  // Only lower half of FFT is useful
+      if (*lastWidth != w) {
+        *lastWidth = w;
+        logBins->resize(w);
+        for (int x = 0; x < w; ++x) {
+          // Log mapping: spreads bass across more pixels
+          float t = (float)x / (float)(w - 1);
+          float logIdx = std::pow(t, 2.0f) * (float)(usableBins - 1);
+          (*logBins)[x] = logIdx;
+        }
+      }
+
+      // Sample amplitude at each x using log mapped bins with interpolation
+      auto sampleAmplitude = [&](int x) -> float {
+        float logIdx = (*logBins)[x];
+        int bin0 = (int)logIdx;
+        int bin1 = std::min(bin0 + 1, usableBins - 1);
+        float frac = logIdx - (float)bin0;
+
+        float raw = curMags[bin0] * (1.0f - frac) + curMags[bin1] * frac;
+
+        int radius = std::max(1, w / 80);
+        float sum = raw;
+        int count = 1;
+        for (int r = 1; r <= radius; ++r) {
+          if (x - r >= 0) { sum += curMags[std::min((int)(*logBins)[x - r], usableBins - 1)]; count++; }
+          if (x + r < w)  { sum += curMags[std::min((int)(*logBins)[x + r], usableBins - 1)]; count++; }
+        }
+        raw = sum / (float)count;
+
+        // Normalize and compress (sqrt boosts quieter frequencies)
+        float normalized = std::min(raw * normFactor, 1.0f);
+        return std::sqrt(normalized);
+      };
+
+      Color waveColor = gradient.size() > 1 ? gradient[1] : Color::White;
+      Color peakColor = gradient.size() > 2 ? gradient[2] : Color::White;
+
+      // Draw upper waveform
+      int prevX = 0;
+      int prevY = centerY;
+      for (int x = 0; x < w; ++x) {
+        float amplitude = sampleAmplitude(x);
+        float envelope = std::sin((float)x / (float)w * 3.14159f);
+        int y = centerY - (int)(amplitude * envelope * centerY * 0.75f);
+        y = std::clamp(y, 0, h - 1);
+
+        if (x > 0) {
+          c.DrawPointLine(prevX, prevY, x, y, waveColor);
+        }
+        prevX = x;
+        prevY = y;
+      }
+
+      // Draw mirrored waveform below center
+      prevX = 0;
+      prevY = centerY;
+      for (int x = 0; x < w; ++x) {
+        float amplitude = sampleAmplitude(x);
+        float envelope = std::sin((float)x / (float)w * 3.14159f);
+        int y = centerY + (int)(amplitude * envelope * centerY * 0.75f);
+        y = std::clamp(y, 0, h - 1);
+
+        if (x > 0) {
+          c.DrawPointLine(prevX, prevY, x, y, peakColor);
+        }
+        prevX = x;
+        prevY = y;
+      }
+
+      // Dotted center line
+      for (int x = 0; x < w; x += 4) {
+        c.DrawPoint(x, centerY, true, Color::GrayDark);
+      }
+    }) | flex;
   });
 }

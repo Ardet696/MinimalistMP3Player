@@ -30,6 +30,10 @@ add_executable(MP3Player
         src/tui/FileManager.cpp
         src/tui/FileManager.h
         src/tui/Visuals.cpp
+        src/tui/VisualsMirrored.cpp
+        src/tui/VisualsRolling.cpp
+        src/tui/VisualsCircular.cpp
+        src/tui/VisualsPanel.cpp
         src/tui/Visuals.h
         src/tui/PlayingBar.cpp
         src/tui/PlayingBar.h

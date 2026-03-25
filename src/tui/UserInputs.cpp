@@ -12,7 +12,7 @@
 #include "Palette.h"
 
 namespace {
-enum class InputMode { Command, RootConfig, ThemeConfig, OutputDevice };   // State machine of input bar
+enum class InputMode { Command, RootConfig, ThemeConfig, OutputDevice, VisualsConfig };   // State machine of input bar
 constexpr std::string_view CMD_PLAY  = "play";
 constexpr std::string_view CMD_STOP  = "stop";
 constexpr std::string_view CMD_NEXT  = "next";
@@ -22,6 +22,7 @@ constexpr std::string_view CMD_F_HELP = "fileHelp";
 constexpr std::string_view CMD_CONFIG = "rootConfig";
 constexpr std::string_view CMD_THEMES = "themes";
 constexpr std::string_view CMD_OUTPUT = "output";
+constexpr std::string_view CMD_VISUALS = "visuals";
 constexpr std::string_view CMD_QUIT  = "quit";
 
 /// Shorten a device name to a recognizable label.
@@ -82,7 +83,7 @@ std::string ProcessCommand(const std::string& cmd) {
   if (cmd == CMD_STOP)  return "Stopped";
   if (cmd == CMD_NEXT)  return "Next track";
   if (cmd == CMD_PREV)  return "Previous track";
-  if (cmd == CMD_HELP)  return "Commands [song-action]: play , stop, next, prev, output, quit/q";
+  if (cmd == CMD_HELP)  return "Commands: play, stop, next, prev, output, visuals, themes, quit/q";
   if (cmd == CMD_F_HELP) return  "In Album Manager: ['↑', '↓': albums/songs,'Enter': select,'Backspace': go back]";
   if (cmd == CMD_THEMES) return "Enter [1..4] for the available themes: { [1]-Fire | [2]-BW | [3]-PurpleRain | [4]-Forest } ";
   if (cmd == CMD_QUIT)  return "Quitting...";
@@ -91,7 +92,9 @@ std::string ProcessCommand(const std::string& cmd) {
 
 }
 
-ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& config, std::shared_ptr<bool> reload_flag) {
+ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& config,
+                                  std::shared_ptr<bool> reload_flag,
+                                  std::shared_ptr<int> visualIndex) {
   using namespace ftxui;
   auto input_content = std::make_shared<std::string>();
   auto new_root_path = std::make_shared<std::string>();
@@ -127,6 +130,13 @@ ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& conf
          if (!cached_devices->empty()) {
            *mode = InputMode::OutputDevice;
          }
+         input_content->clear();
+         return true;
+       }
+       if (*input_content == "visuals")
+       {
+         *mode = InputMode::VisualsConfig;
+         *status_msg = "Select visual: [1]-Spectrum [2]-Oscilloscope [3]-Mirrored [4]-Rolling [5]-Wave";
          input_content->clear();
          return true;
        }
@@ -207,6 +217,17 @@ ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& conf
           *status_msg = "Output: " + truncateDeviceName((*cached_devices)[deviceIndex]);
         } else {
           *status_msg = "Invalid selection. Enter [1.." + std::to_string(cached_devices->size()) + "].";
+        }
+        *mode = InputMode::Command;
+      }
+      else if (*mode == InputMode::VisualsConfig) {
+        const std::string& input = *input_content;
+        if (input.length() == 1 && input[0] >= '1' && input[0] <= '5') {
+          *visualIndex = input[0] - '1';
+          const char* names[] = {"Spectrum", "Oscilloscope", "Mirrored", "Rolling", "Wave"};
+          *status_msg = std::string("Visual: ") + names[*visualIndex];
+        } else {
+          *status_msg = "Invalid. Enter [1..5]: Spectrum, Oscilloscope, Mirrored, Rolling, Wave";
         }
         *mode = InputMode::Command;
       }

@@ -10,7 +10,7 @@
 #include <set>
 
 #include "FileManager.h"
-// #include "Visuals.h"  // TODO: re-enable when visuals are implemented
+// #include "Visuals.h"  // Visualizations are now hosted inside PlayingBar
 #include "PlayingBar.h"
 #include "UserInputs.h"
 #include "../library/MusicLibrary.h"
@@ -54,10 +54,10 @@ int main() {
   auto reload_flag = std::make_shared<bool>(false);
 
   auto screen = ScreenInteractive::Fullscreen();
+  auto visualIndex = std::make_shared<int>(0);  // Default: Spectrum
   auto file_manager = CreateFileManager(service, reload_flag);
-  // auto visuals      = CreateVisuals();  // TODO: re-enable when visuals are implemented
-  auto playing_bar  = CreatePlayingBar(service, reload_flag);
-  auto user_inputs  = CreateUserInputs(service, config, reload_flag);
+  auto playing_bar  = CreatePlayingBar(service, reload_flag, visualIndex);
+  auto user_inputs  = CreateUserInputs(service, config, reload_flag, visualIndex);
 
   auto layout = Container::Vertical({
     file_manager,

@@ -5,4 +5,6 @@
 class ILibraryService;
 class IConfigService;
 
-ftxui::Component CreateUserInputs(ILibraryService& service,IConfigService& config, std::shared_ptr<bool> reload_flag);
+ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& config,
+                                  std::shared_ptr<bool> reload_flag,
+                                  std::shared_ptr<int> visualIndex);
