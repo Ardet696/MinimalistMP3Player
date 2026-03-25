@@ -5,6 +5,7 @@
 #include "../library/MusicLibrary.h"
 #include "../library/LibraryScanner.h"
 #include "../player/PlaybackController.h"
+#include <mutex>
 
 class LibraryService : public ILibraryService {
 public:
@@ -29,6 +30,7 @@ public:
     void setOutputDevice(int deviceIndex) override;
 private:
     MusicLibrary& library_;
+    mutable std::mutex mutex_;
     LibraryScanner scanner_;
     PlaybackController& controller_;
 };

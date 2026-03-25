@@ -6,6 +6,25 @@
 #include "ftxui/component/event.hpp"
 #include "Palette.h"
 
+// Wraps a Menu component to add mouse scroll wheel support.
+static ftxui::Component WithMouseScroll(ftxui::Component menu, int* selected, const std::vector<std::string>* items) {
+  using namespace ftxui;
+  return CatchEvent(menu, [=](Event event) {
+    if (event.is_mouse()) {
+      auto& mouse = event.mouse();
+      if (mouse.button == Mouse::WheelUp && *selected > 0) {
+        (*selected)--;
+        return true;
+      }
+      if (mouse.button == Mouse::WheelDown && *selected < (int)items->size() - 1) {
+        (*selected)++;
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
 ftxui::Component CreateFileManager(ILibraryService& service,
                                    const std::shared_ptr<bool>& reload_flag) {
   using namespace ftxui;
@@ -28,7 +47,10 @@ ftxui::Component CreateFileManager(ILibraryService& service,
   auto album_menu = Menu(albums.get(), selected_album.get());
   auto song_menu  = Menu(current_songs.get(), selected_song.get());
 
-  auto album_with_enter = CatchEvent(album_menu, [=, &service](Event event) {
+  auto scrollable_album_menu = WithMouseScroll(album_menu, selected_album.get(), albums.get());
+  auto scrollable_song_menu  = WithMouseScroll(song_menu, selected_song.get(), current_songs.get());
+
+  auto album_with_enter = CatchEvent(scrollable_album_menu, [=, &service](Event event) {
     if (event == Event::Return && !albums->empty()) {
       *current_songs = (*songs_per_album)[*selected_album];
       *viewing_songs = true;
@@ -40,7 +62,7 @@ ftxui::Component CreateFileManager(ILibraryService& service,
     return false;
   });
 
-  auto song_with_events = CatchEvent(song_menu, [=, &service](Event event) {
+  auto song_with_events = CatchEvent(scrollable_song_menu, [=, &service](Event event) {
     if (event == Event::Return && !current_songs->empty()) {
       service.playSong((*albums)[*selected_album], *selected_song);
       return true;
@@ -93,20 +115,20 @@ ftxui::Component CreateFileManager(ILibraryService& service,
           text(" < " + (*albums)[*selected_album]) | bold,
           separator(),
           text("▶ Now playing: " + (*current_songs)[playingIndex]) | color(playingColor) | bold,
-          song_with_events->Render() | flex,
+          song_with_events->Render() | yframe | yflex,
         });
       } else {
         content = vbox({
           text(" < " + (*albums)[*selected_album]) | bold,
           separator(),
-          song_with_events->Render() | flex,
+          song_with_events->Render() | yframe | yflex,
         });
       }
     } else {
       content = vbox({
         text("Albums") | bold | center,
         separator(),
-        album_with_enter->Render() | flex,
+        album_with_enter->Render() | yframe | yflex,
       });
     }
     return content | border | flex;

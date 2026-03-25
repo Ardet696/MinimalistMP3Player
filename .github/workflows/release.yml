@@ -84,3 +84,48 @@ jobs:
           files: |
             artifacts/linux-binary/mp3player-linux-x86_64
             artifacts/macos-binary/mp3player-macos-arm64
+
+  update-aur:
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_KEY }}" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config <<EOF
+          Host aur.archlinux.org
+            IdentityFile ~/.ssh/aur
+            User aur
+          EOF
+
+      - name: Clone AUR repo
+        run: git clone ssh://aur@aur.archlinux.org/minimalist-mp3-player.git aur
+
+      - name: Update PKGBUILD
+        working-directory: aur
+        run: |
+          sed -i "s/^pkgver=.*/pkgver=${{ steps.version.outputs.version }}/" PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
+
+      - name: Generate .SRCINFO
+        working-directory: aur
+        run: |
+          sudo pacman-key --init 2>/dev/null || true
+          docker run --rm -v "$PWD":/pkg -w /pkg archlinux:latest bash -c \
+            "pacman -Sy --noconfirm base-devel && chown -R nobody:nobody . && sudo -u nobody makepkg --printsrcinfo > .SRCINFO"
+
+      - name: Push to AUR
+        working-directory: aur
+        run: |
+          git config user.name "Ardet696"
+          git config user.email "${{ secrets.AUR_EMAIL }}"
+          git add PKGBUILD .SRCINFO
+          git commit -m "Update to v${{ steps.version.outputs.version }}"
+          git push

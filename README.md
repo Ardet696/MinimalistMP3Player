@@ -57,6 +57,25 @@ A `PKGBUILD` is included in the repository. Arch users can also install from the
 yay -S minimalist-mp3-player
 ```
 
+### macOS
+
+Apple Clang does not support `std::jthread` (a C++20 feature used throughout the codebase). macOS users must install GCC via Homebrew:
+
+```bash
+# 1. Install dependencies
+brew install gcc sdl2 cmake
+
+# 2. Find your GCC version
+ls /opt/homebrew/bin/g++-*    # e.g. g++-14, g++-16
+
+# 3. Build with GCC instead of Apple Clang (replace 14 with your version)
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-14
+cmake --build build -j$(sysctl -n hw.ncpu)
+
+# 4. Run
+./build/MP3Player
+```
+
 ### Windows
 
 The codebase is cross-platform (SDL2, FTXUI, and minimp3 all support Windows), but has only been tested on Linux. Contributions and testing for Windows are welcome.
@@ -121,6 +140,39 @@ The palette applies to whatever terminal colour scheme you are running. Below ar
 ![Green theme](images/WithMyOmarchyTheme+ColorGreen.png)
 ![Purple theme](images/WithMyOmarchyTheme+ColorPurple.png)
 
+### Pre-built binaries
+
+Pre-built binaries for Linux (x86_64) and macOS (arm64) are available on the [GitHub Releases](https://github.com/ardet696/MinimalistMP3Player/releases) page. Download the binary for your platform, make it executable, and run — no compiler needed. You still need SDL2 installed as a runtime dependency:
+
+| Platform | Install SDL2 |
+|----------|-------------|
+| Ubuntu / Debian | `sudo apt install libsdl2-2.0-0` |
+| Fedora | `sudo dnf install SDL2` |
+| macOS | `brew install sdl2` |
+
+```bash
+chmod +x mp3player-linux-x86_64
+./mp3player-linux-x86_64
+```
+
+---
+
+## CI/CD
+
+Releases are fully automated via GitHub Actions. When a version tag is pushed:
+
+```bash
+git tag v1.0.1
+git push --tags
+```
+
+The pipeline will:
+1. **Build** Linux (x86_64) and macOS (arm64) binaries
+2. **Create a GitHub Release** with both binaries attached and auto-generated release notes
+3. **Update the AUR package** (`minimalist-mp3-player`) to the new version automatically
+
+The workflow is defined in [`.github/workflows/release.yml`](.github/workflows/release.yml).
+
 ---
 
 ## Technical
@@ -140,10 +192,11 @@ SDL Audio Callback → SpectrumAnalyzer.feed()  → mutex  → PlayingBar (40 lo
 
 ### Threads
 
-The player runs 10 threads in steady state:
+The player runs 11 threads in steady state:
 
 - **Main / TUI thread** — runs the FTXUI event loop and renders at ~30 fps.
 - **Refresh thread** — posts a custom FTXUI event every 33 ms to trigger redraws independent of user input.
+- **Directory watcher thread** — polls the music root directory every 2 seconds. If folders are added or removed, it rescans the library and triggers a file manager refresh automatically.
 - **Decode thread** — continuously reads compressed MP3 frames via minimp3, decodes them into raw PCM `int16_t` samples, and writes them into the ring buffer. Managed by `std::jthread` with cooperative cancellation via `std::stop_token` — no `terminate()` calls, no detached threads.
 - **SDL audio callback thread** — spawned internally by SDL2. Fires on a real-time schedule to pull frames from the ring buffer and push them to the hardware. This thread must never block.
 - **Auto-advance monitor thread** — polls `PlaybackEngine::hasReachedEndOfStream()` and triggers the next track automatically when the SDL callback has drained the ring buffer after the decode thread signals end-of-stream.
@@ -179,6 +232,6 @@ The audio callback feeds every decoded chunk into `BpmDetector`. The signal is m
 | Peak memory | ~23 MB |
 | CPU usage during playback | ~2–3% (1 core of 16) |
 | Memory growth over session | None (0 major faults) |
-| Threads | 10 |
+| Threads | 11 |
 
 Memory stays flat throughout a session — no leaks from the ring buffer, spectrum allocations, or FTXUI re-renders. For reference, Spotify idles at ~300 MB and mpv at ~50–80 MB.

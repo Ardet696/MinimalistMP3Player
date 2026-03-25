@@ -6,6 +6,8 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
+#include <set>
 
 #include "FileManager.h"
 #include "Visuals.h"
@@ -15,6 +17,19 @@
 #include "../service/LibraryService.h"
 #include "../service/ConfigService.h"
 #include "../player/PlaybackController.h"
+
+// Snapshot the immediate subdirectories of a path (album folders).
+static std::set<std::string> snapshotDirectory(const std::string& root) {
+  std::set<std::string> entries;
+  if (root.empty()) return entries;
+  std::error_code ec;
+  for (const auto& entry : std::filesystem::directory_iterator(root, ec)) {
+    if (entry.is_directory(ec)) {
+      entries.insert(entry.path().filename().string());
+    }
+  }
+  return entries;
+}
 
 int main() {
   using namespace ftxui;
@@ -75,7 +90,7 @@ int main() {
     return false;
   });
 
-  // Background refresh thread will posts a custom event 30 times/second to keep UI updated
+  // Background refresh thread posts a custom event 30 times/second to keep UI updated
   std::atomic<bool> running{true};
   std::thread refresh([&] {
     while (running) {
@@ -84,10 +99,32 @@ int main() {
     }
   });
 
+  // Directory watcher: polls every 2 seconds, rescans library if folders changed
+  std::thread dirWatcher([&] {
+    auto lastSnapshot = snapshotDirectory(config.getRootPath());
+    while (running) {
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      if (!running) break;
+
+      std::string root = config.getRootPath();
+      if (root.empty()) continue;
+
+      auto currentSnapshot = snapshotDirectory(root);
+      if (currentSnapshot != lastSnapshot) {
+        lastSnapshot = currentSnapshot;
+        std::string error;
+        service.setRootPath(root, error);
+        *reload_flag = true;
+        screen.PostEvent(Event::Custom);
+      }
+    }
+  });
+
   screen.Loop(component);
 
   running = false;
   refresh.join();
+  dirWatcher.join();
 
   return EXIT_SUCCESS;
 }

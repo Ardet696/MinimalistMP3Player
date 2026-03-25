@@ -3,6 +3,7 @@
 LibraryService::LibraryService(MusicLibrary& library, PlaybackController& controller): library_(library), controller_(controller) {}
 
 std::vector<std::string> LibraryService::getAlbumNames() const {
+    std::lock_guard lock(mutex_);
     std::vector<std::string> names;
     for (const auto& album : library_.getAlbums()) {
         names.push_back(album.getTitle());
@@ -11,6 +12,7 @@ std::vector<std::string> LibraryService::getAlbumNames() const {
 }
 
 std::vector<std::string> LibraryService::getSongNames(const std::string& albumName) const {
+    std::lock_guard lock(mutex_);
     const auto* album = library_.findAlbumByTitle(albumName);
     if (!album) return {};
 
@@ -22,6 +24,7 @@ std::vector<std::string> LibraryService::getSongNames(const std::string& albumNa
 }
 
 std::vector<std::vector<std::string>> LibraryService::getAllSongNames() const {
+    std::lock_guard lock(mutex_);
     std::vector<std::vector<std::string>> all;
     for (const auto& album : library_.getAlbums()) {
         std::vector<std::string> names;
@@ -38,11 +41,13 @@ bool LibraryService::setRootPath(const std::string& path, std::string& outError)
     if (!outError.empty()) {
         return false;
     }
+    std::lock_guard lock(mutex_);
     library_ = std::move(newLibrary);
     return true;
 }
 
 void LibraryService::playSong(const std::string& albumName, int songIndex) {
+    std::lock_guard lock(mutex_);
     const auto* album = library_.findAlbumByTitle(albumName);
     if (!album) return;
 
