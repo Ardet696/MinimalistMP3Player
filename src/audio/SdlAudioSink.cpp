@@ -1,8 +1,10 @@
 #include "SdlAudioSink.h"
 
 #include <SDL.h>
+#include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 SdlAudioSink::SdlAudioSink() = default;
 
@@ -90,6 +92,14 @@ bool SdlAudioSink::isOpen() const {
     return open_;
 }
 
+void SdlAudioSink::setVolume(int percent) {
+    volume_.store(std::clamp(percent, 0, 100), std::memory_order_relaxed);
+}
+
+int SdlAudioSink::getVolume() const {
+    return volume_.load(std::memory_order_relaxed);
+}
+
 std::vector<std::string> SdlAudioSink::listOutputDevices() {
     if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
@@ -133,5 +143,17 @@ void SdlAudioSink::fill(std::uint8_t* stream, const int len) const {
 
     if (samplesWritten < samplesRequested) {
         std::memset(out + samplesWritten, 0, (samplesRequested - samplesWritten) * sizeof(int16_t));
+    }
+
+    // Apply volume scaling
+    int vol = volume_.load(std::memory_order_relaxed);
+    if (vol < 100) {
+        // SDL_MIX_MAXVOLUME is 128; scale our 0-100 range
+        int sdlVol = vol * SDL_MIX_MAXVOLUME / 100;
+        // Clear stream first, then mix scaled audio back
+        // We need a temp copy since SDL_MixAudioFormat adds to dst
+        std::vector<std::uint8_t> tmp(stream, stream + len);
+        std::memset(stream, 0, static_cast<std::size_t>(len));
+        SDL_MixAudioFormat(stream, tmp.data(), AUDIO_S16SYS, static_cast<Uint32>(len), sdlVol);
     }
 }

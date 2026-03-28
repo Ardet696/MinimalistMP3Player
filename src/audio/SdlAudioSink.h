@@ -1,6 +1,7 @@
 #ifndef MP3PLAYER_SDLAUDIOSINK_H
 #define MP3PLAYER_SDLAUDIOSINK_H
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -25,6 +26,9 @@ public:
     void close();
     bool isOpen() const;
 
+    void setVolume(int percent);   // 0-100
+    int  getVolume() const;
+
     /// List available audio output device names via SDL.
     static std::vector<std::string> listOutputDevices();
 
@@ -36,6 +40,7 @@ private:
     AudioFormat fmt_{};
     FrameProvider provider_{};
     bool open_ = false;
+    std::atomic<int> volume_{100}; // 0-100
 };
 
 #endif
