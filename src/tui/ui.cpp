@@ -74,8 +74,8 @@ int main() {
     return hbox({
       file_manager->Render() | size(WIDTH, EQUAL, 100) | flex_grow | yflex,
       vbox({
-        playing_bar->Render() | size(HEIGHT, EQUAL, 30) | flex_grow,
-        user_inputs->Render() | size(HEIGHT, EQUAL, 10) | flex_grow,
+        playing_bar->Render() | size(HEIGHT, EQUAL, 20) | flex_grow,
+        user_inputs->Render() | size(HEIGHT, EQUAL, 20) | flex_grow,
       }) | size(WIDTH, EQUAL, 300) | flex_grow | yflex,
     }) | border | flex;
   });
