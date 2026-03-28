@@ -10,9 +10,9 @@
 #include <set>
 
 #include "FileManager.h"
-// #include "Visuals.h"  // Visualizations are now hosted inside PlayingBar
 #include "PlayingBar.h"
 #include "UserInputs.h"
+#include "Palette.h"
 #include "../library/MusicLibrary.h"
 #include "../service/LibraryService.h"
 #include "../service/ConfigService.h"
@@ -51,10 +51,15 @@ int main() {
     service.setRootPath(savedRoot, error);
   }
 
+  // Restore saved theme
+  int savedTheme = config.getTheme();
+  if (savedTheme >= 0 && savedTheme <= 3)
+    Palette::setGradient(static_cast<Palette::Theme>(savedTheme));
+
   auto reload_flag = std::make_shared<bool>(false);
 
   auto screen = ScreenInteractive::Fullscreen();
-  auto visualIndex = std::make_shared<int>(0);  // Default: Spectrum
+  auto visualIndex = std::make_shared<int>(config.getVisual());
   auto file_manager = CreateFileManager(service, reload_flag);
   auto playing_bar  = CreatePlayingBar(service, reload_flag, visualIndex);
   auto user_inputs  = CreateUserInputs(service, config, reload_flag, visualIndex);
@@ -102,7 +107,8 @@ int main() {
   std::thread dirWatcher([&] {
     auto lastSnapshot = snapshotDirectory(config.getRootPath());
     while (running) {
-      std::this_thread::sleep_for(std::chrono::seconds(2));
+      for (int i = 0; i < 20 && running; ++i)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
       if (!running) break;
 
       std::string root = config.getRootPath();
@@ -122,6 +128,7 @@ int main() {
   screen.Loop(component);
 
   running = false;
+  controller.stop();
   refresh.join();
   dirWatcher.join();
 

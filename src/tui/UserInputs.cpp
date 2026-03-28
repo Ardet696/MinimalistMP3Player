@@ -174,18 +174,22 @@ ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& conf
             switch (c) {
               case '1':
                 Palette::setGradient(Palette::Theme::Fire);
+                config.setTheme(0);
                 *status_msg = "Theme changed to: Fire";
                 break;
               case '2':
                 Palette::setGradient(Palette::Theme::BW);
+                config.setTheme(1);
                 *status_msg = "Theme changed to: BW";
                 break;
               case '3':
                 Palette::setGradient(Palette::Theme::PurpleRain);
+                config.setTheme(2);
                 *status_msg = "Theme changed to: PurpleRain";
                 break;
               case '4':
                 Palette::setGradient(Palette::Theme::Forest);
+                config.setTheme(3);
                 *status_msg = "Theme changed to: Forest";
                 break;
             }
@@ -224,6 +228,7 @@ ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& conf
         const std::string& input = *input_content;
         if (input.length() == 1 && input[0] >= '1' && input[0] <= '5') {
           *visualIndex = input[0] - '1';
+          config.setVisual(*visualIndex);
           const char* names[] = {"Spectrum", "Oscilloscope", "Mirrored", "Rolling", "Wave"};
           *status_msg = std::string("Visual: ") + names[*visualIndex];
         } else {
