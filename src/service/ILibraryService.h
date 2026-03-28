@@ -22,6 +22,10 @@ class ILibraryService
         virtual float getBpmLoadFactor() const = 0;
         virtual std::string getCurrentAlbum() const = 0;
         virtual int getCurrentTrackIndex() const = 0;
+        virtual std::string getCurrentSongName() const = 0;
+        virtual std::string getNextSongName() const = 0;
+        virtual void setVolume(int percent) = 0;
+        virtual int  getVolume() const = 0;
         virtual std::vector<std::string> listOutputDevices() const = 0;
         virtual void setOutputDevice(int deviceIndex) = 0;
 };

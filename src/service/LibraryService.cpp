@@ -105,6 +105,37 @@ int LibraryService::getCurrentTrackIndex() const {
     return controller_.getCurrentTrackNumber() - 1;
 }
 
+std::string LibraryService::getCurrentSongName() const {
+    auto path = controller_.getCurrentSong();
+    if (path.empty()) return "";
+    return path.stem().string();
+}
+
+std::string LibraryService::getNextSongName() const {
+    int current = controller_.getCurrentTrackNumber(); // 1-based
+    int total = controller_.getTotalTracks();
+    if (current <= 0 || current >= total) return "";
+    // Get the album songs and return the next one's name
+    std::string album = controller_.getCurrentAlbum();
+    if (album.empty()) return "";
+    std::lock_guard lock(mutex_);
+    const auto* a = library_.findAlbumByTitle(album);
+    if (!a) return "";
+    const auto& songs = a->getSongs();
+    if (current < static_cast<int>(songs.size())) {
+        return songs[current].getTitle(); // current is 1-based, so index = current
+    }
+    return "";
+}
+
+void LibraryService::setVolume(int percent) {
+    controller_.setVolume(percent);
+}
+
+int LibraryService::getVolume() const {
+    return controller_.getVolume();
+}
+
 std::vector<std::string> LibraryService::listOutputDevices() const {
     return PlaybackController::listOutputDevices();
 }

@@ -26,6 +26,10 @@ public:
     float getBpmLoadFactor() const override;
     std::string getCurrentAlbum() const override;
     int getCurrentTrackIndex() const override;
+    std::string getCurrentSongName() const override;
+    std::string getNextSongName() const override;
+    void setVolume(int percent) override;
+    int  getVolume() const override;
     std::vector<std::string> listOutputDevices() const override;
     void setOutputDevice(int deviceIndex) override;
 private:
