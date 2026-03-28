@@ -233,6 +233,14 @@ void PlaybackController::handleAutoAdvance() {
     eventPublisher_.publish(PlaybackEvent(PlaybackEventType::SongFinished));
 }
 
+void PlaybackController::setVolume(int percent) {
+    engine_.setVolume(percent);
+}
+
+int PlaybackController::getVolume() const {
+    return engine_.getVolume();
+}
+
 void PlaybackController::setOutputDevice(const std::string& deviceName) {
     std::lock_guard lock(mutex_);
     engine_.setOutputDevice(deviceName);

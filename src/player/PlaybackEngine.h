@@ -68,6 +68,9 @@ public:
     float getPlaybackProgress() const;
     float getBpmLoadFactor() const;
 
+    void setVolume(int percent);  // 0-100
+    int  getVolume() const;
+
     /// Set the preferred output device name. Takes effect on next load().
     void setOutputDevice(const std::string& deviceName);
     std::string getOutputDevice() const;
@@ -120,6 +123,9 @@ private:
 
     // Preferred output device (empty = system default)
     std::string outputDeviceName_;
+
+    // Volume persisted across sink recreations
+    std::atomic<int> volume_{100};
 };
 
 #endif // MP3PLAYER_PLAYBACKENGINE_H

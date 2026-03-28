@@ -61,6 +61,9 @@ public:
     std::string getCurrentAlbum() const;
     void setCurrentAlbum(const std::string& albumName);
 
+    void setVolume(int percent);  // 0-100
+    int  getVolume() const;
+
     /// Set the preferred audio output device. Reloads the current song through the new device.
     void setOutputDevice(const std::string& deviceName);
     std::string getOutputDevice() const;

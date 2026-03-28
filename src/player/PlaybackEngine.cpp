@@ -80,6 +80,9 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
         return false;
     }
 
+    // Apply persisted volume to new sink
+    sink_->setVolume(volume_.load(std::memory_order_relaxed));
+
     // Ready to play
     state_.store(State::Stopped, std::memory_order_release);
     return true;
@@ -200,6 +203,16 @@ bool PlaybackEngine::startPlayback() {
     sink_->start();
 
     return true;
+}
+
+void PlaybackEngine::setVolume(int percent) {
+    volume_.store(std::clamp(percent, 0, 100), std::memory_order_relaxed);
+    std::lock_guard lock(mutex_);
+    if (sink_) sink_->setVolume(percent);
+}
+
+int PlaybackEngine::getVolume() const {
+    return volume_.load(std::memory_order_relaxed);
 }
 
 void PlaybackEngine::setOutputDevice(const std::string& deviceName) {
