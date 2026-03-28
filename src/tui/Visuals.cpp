@@ -96,42 +96,42 @@ ftxui::Component CreateVisuals(ILibraryService& service) {
         return std::sqrt(normalized);
       };
 
-      Color waveColor = gradient.size() > 1 ? gradient[1] : Color::White;
-      Color peakColor = gradient.size() > 2 ? gradient[2] : Color::White;
+      int gSize = (int)gradient.size();
 
-      // Draw upper waveform
-      int prevX = 0;
-      int prevY = centerY;
       for (int x = 0; x < w; ++x) {
         float amplitude = sampleAmplitude(x);
         float envelope = std::sin((float)x / (float)w * 3.14159f);
         int y = centerY - (int)(amplitude * envelope * centerY * 0.75f);
         y = std::clamp(y, 0, h - 1);
 
-        if (x > 0) {
-          c.DrawPointLine(prevX, prevY, x, y, waveColor);
+        int thickness = 1 + (int)(amplitude * 14.0f);
+        thickness = std::clamp(thickness, 1, 15);
+
+        for (int p = 0; p < thickness; ++p) {
+          int py = y - p;
+          if (py < 0) break;
+          int colorIdx = (thickness - 1 - p) * (gSize - 1) / std::max(thickness - 1, 1);
+          c.DrawPoint(x, py, true, gradient[std::clamp(colorIdx, 0, gSize - 1)]);
         }
-        prevX = x;
-        prevY = y;
       }
 
-      // Draw mirrored waveform below center
-      prevX = 0;
-      prevY = centerY;
       for (int x = 0; x < w; ++x) {
         float amplitude = sampleAmplitude(x);
         float envelope = std::sin((float)x / (float)w * 3.14159f);
         int y = centerY + (int)(amplitude * envelope * centerY * 0.75f);
         y = std::clamp(y, 0, h - 1);
 
-        if (x > 0) {
-          c.DrawPointLine(prevX, prevY, x, y, peakColor);
+        int thickness = 1 + (int)(amplitude * 14.0f);
+        thickness = std::clamp(thickness, 1, 15);
+
+        for (int p = 0; p < thickness; ++p) {
+          int py = y + p;
+          if (py >= h) break;
+          int colorIdx = (thickness - 1 - p) * (gSize - 1) / std::max(thickness - 1, 1);
+          c.DrawPoint(x, py, true, gradient[std::clamp(colorIdx, 0, gSize - 1)]);
         }
-        prevX = x;
-        prevY = y;
       }
 
-      // Dotted center line
       for (int x = 0; x < w; x += 4) {
         c.DrawPoint(x, centerY, true, Color::GrayDark);
       }
