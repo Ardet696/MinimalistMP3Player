@@ -47,11 +47,10 @@ cd MinimalistMP3Player
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j$(nproc)
 
-sudo cmake --install build
+./build/MP3Player
 ```
 
-After step 2, run the player with `./build/MP3Player`.
-After step 3, just type `MP3Player` from anywhere.
+> **Note:** Avoid using `sudo cmake --install build` if you plan to use the AUR package later — both install to different paths and the manual install takes priority.
 
 ### macOS
 
