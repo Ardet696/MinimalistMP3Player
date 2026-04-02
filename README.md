@@ -50,19 +50,17 @@ cmake --build build -j$(nproc)
 ./build/MP3Player
 ```
 
-> **Note:** Avoid using `sudo cmake --install build` if you plan to use the AUR package later — both install to different paths and the manual install takes priority.
+> Note: Avoid using `sudo cmake --install build` if you plan to use the AUR package later, both install to different paths and the manual install takes priority.
 
 ### macOS
 
-Apple Clang does not support `std::jthread`. macOS users must install GCC via Homebrew:
+Apple Clang does not support std::jthread. macOS users must install GCC via Homebrew:
 
 ```bash
 brew install gcc sdl2 cmake
 
-# 2. Find your GCC version
-ls /opt/homebrew/bin/g++-*    # e.g. g++-14, g++-16
+ls /opt/homebrew/bin/g++-*  
 
-# 3. Build with GCC instead of Apple Clang (replace 14 with your version)
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-14
 cmake --build build -j$(sysctl -n hw.ncpu)
 
@@ -84,51 +82,25 @@ The program will look for directories with mp3 files in the music root dir,  tha
 - When the MP3Player is launched, it will show in the left side of the TUI the list of albums detected.
 On first launch the file manager will be empty.
 
-- Type `RootConfig` in the command bar and press `Enter`, then type the full path to your music directory (e.g. `/home/user/Music`) and press `Enter` again. 
+- Type RootConfig in the command bar and press Enter, then type the full path to your music directory (e.g. `/home/user/Music`) and press Enter again. 
 
 
 In the following screenshot, there is in the MP3Player TUI showing the detected albums, in the right side the "ls" of that music directory.
 For example the ".png" image s discarded, I do not recommend using a different structure than this for the music directory since it has been developed to follow this pattern.
 
 ![RootExample](images/RootAlbums.png)
-### Album Manager (left panel)
+Use ↑ / ↓ to scroll between albums or songs press enter to select.
 
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` or scroll | Navigate albums / songs |
-| `Enter` | Open album and start playing from track 1 |
-| `Enter` (on a song) | Play selected song |
-| `Backspace` | Go back to album list |
+### Command terminal emulator
 
-The currently playing track is highlighted in the song list with a `▶ Now playing:` indicator.
+The command panel works like a mini config-chat. 
+Some commands: play, stop, next, prev, help, fileHelp.
 
-### Command terminal emulator (bottom-right panel)
-
-The command panel works like a mini config-chat. Type a command and press `Enter` — the system responds inline with coloured indicators: `>` for system responses and `x` (in red) for errors. User inputs fade after 2 seconds to keep the panel clean.
-
-The top of the panel shows the **next track** in the queue so you always know what's coming up.
-
-| Command | Action |
-|---------|--------|
-| `play` | Resume playback |
-| `stop` | Pause playback |
-| `next` | Skip to next track |
-| `prev` | Go back to previous track |
-| `volume` | Adjust volume with Left/Right arrow keys |
-| `output` | Select audio output device |
-| `visuals` | Switch visualisation mode (5 options) |
-| `themes` | Change colour palette |
-| `RootConfig` | Change the music root directory |
-| `help` | Show available commands |
-| `fileHelp` | Show Album Manager key bindings |
-| `quit` / `q` | Exit the player |
-
-Commands like `volume`, `output`, `visuals`, `themes`, and `RootConfig` enter an interactive mode that waits for your selection. Press `Esc` at any time to cancel and return to the normal command input.
+Commands like volume, output, visuals, themes, and RootConfig enter an interactive mode that waits for your selection. Press `Esc` at any time to cancel and return to the normal command input.
 
 ### Playing Bar & Visualisations
 
-The playing bar shows a real-time audio visualiser and a progress bar. Bar decay speed adapts to the BPM of the current track. 
-Type `visuals` and choose from 5 modes:
+Choose from 5 different modes:
 
 <table>
   <tr>
@@ -140,7 +112,6 @@ Type `visuals` and choose from 5 modes:
     <td><img src="images/WaveExample.png" alt="Wave" width="400"/></td>
   </tr>
 </table>
-The next track in queue is shown at the top of the command panel.
 
 ### Settings persistence
 
@@ -148,7 +119,7 @@ Theme, visualisation mode, and music root path are saved to `~/.config/minimalmp
 
 ### Themes
 The changes of theme of the overall terminal emulator are due to my linux distribution (Omarchy). But within the TUI app you can change the colors of the different features like the playing bar or audio spectrum.
-Type `themes` and press `Enter`, then enter a number `1`–`4` to switch the colour palette:
+Type themes and press enter, then enter a number [1,4] to switch the colour palette:
 
 <p align="center">
   <img src="images/PurpleTheme.png" alt="PurpleRain" width="280"/>
@@ -158,6 +129,6 @@ Type `themes` and press `Enter`, then enter a number `1`–`4` to switch the col
 
 ### Volume
 
-Type `volume` and press `Enter` to enter volume mode. Use `←` / `→` arrow keys to decrease / increase the volume in steps of 5%. A gauge bar shows the current level in real time. Press `Esc` to exit volume mode.
+Use arrows keys to decrease / increase the volume in steps of 5%. 
 
 ![VolumeImage](images/VolumeExample.png)
