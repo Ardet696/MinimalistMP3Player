@@ -41,7 +41,7 @@ Install dependencies:
 | Fedora | `sudo dnf install SDL2-devel cmake gcc-c++` |
 
 ```bash
-git clone --recursive https://github.com/ardet696/MinimalistMP3Player.git
+git clone https://github.com/ardet696/MinimalistMP3Player.git
 cd MinimalistMP3Player
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -58,6 +58,8 @@ Apple Clang does not support std::jthread. macOS users must install GCC via Home
 
 ```bash
 brew install gcc sdl2 cmake
+
+./scripts/build-ftxui.sh
 
 ls /opt/homebrew/bin/g++-*  
 
