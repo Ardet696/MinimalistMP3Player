@@ -13,8 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
@@ -40,11 +38,12 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install dependencies
         run: brew install gcc sdl2
+
+      - name: Build FTXUI for macOS
+        run: ./scripts/build-ftxui.sh
 
       - name: Find GCC version
         id: gcc
