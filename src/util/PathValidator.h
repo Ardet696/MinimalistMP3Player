@@ -81,11 +81,6 @@ public:
 ValidationResult validate(std::string_view input) const;
 
     /**
-     * Quick check if a path is valid without detailed error info.
-     */
-bool isValid(std::string_view input) const;
-
-    /**
      * Get readable error message for a validation error.
      */
 static std::string getErrorMessage(ValidationError error);

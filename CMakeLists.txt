@@ -64,14 +64,12 @@ add_executable(MP3Player
     src/tui/UserInputs.cpp
 
     src/library/AlbumInfo.cpp
-    src/library/FastLibraryScanner.cpp
     src/library/LibraryScanner.cpp
     src/library/Playlist.cpp
     src/library/Song.cpp
     src/library/Album.cpp
     src/library/MusicLibrary.cpp
 
-    src/player/AlbumPlayer.cpp
     src/player/SongQueue.cpp
     src/player/PlaybackEngine.cpp
     src/player/DecodeThread.cpp

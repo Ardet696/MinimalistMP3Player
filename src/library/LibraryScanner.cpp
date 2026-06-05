@@ -1,7 +1,6 @@
 #include "LibraryScanner.h"
 #include "../util/PathValidator.h"
 #include <iostream>
-#include <cstdlib>
 
 MusicLibrary LibraryScanner::scanRoot(const std::filesystem::path& rootDir) const {
     MusicLibrary library;
@@ -83,33 +82,6 @@ MusicLibrary LibraryScanner::scanRoot(const std::filesystem::path& rootDir) cons
     std::cerr << "\nScan complete!\n";
     return library;
 }
-
-MusicLibrary LibraryScanner::scanUserMusicDir() const {
-
-    std::filesystem::path musicDir; // User's music directory based on platform
-
-#ifdef _WIN32
-    // Windows: %USERPROFILE%\Music
-    const char* userProfile = std::getenv("USERPROFILE");
-    if (userProfile) {
-        musicDir = std::filesystem::path(userProfile) / "Music";
-    }
-#else
-    // Unix/Linux/Mac: ~/Music
-    const char* home = std::getenv("HOME");
-    if (home) {
-        musicDir = std::filesystem::path(home) / "Music";
-    }
-#endif
-
-    if (musicDir.empty()) {
-        std::cerr << "Could not determine user Music directory\n";
-        return MusicLibrary();
-    }
-
-    return scanRoot(musicDir);
-}
-
 
 MusicLibrary LibraryScanner::scanFromUserInput(const std::string& userInput,
                                                 std::string* outError) const {

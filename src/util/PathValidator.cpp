@@ -85,10 +85,6 @@ PathValidator::ValidationResult PathValidator::validate(std::string_view input) 
     return result; // GO!
 }
 
-bool PathValidator::isValid(std::string_view input) const {
-    return validate(input).valid;
-}
-
 std::string PathValidator::getErrorMessage(ValidationError error) {
     switch (error) {
         case ValidationError::None:

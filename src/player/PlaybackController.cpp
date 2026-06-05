@@ -152,14 +152,6 @@ PlaybackEventPublisher& PlaybackController::getEventPublisher() {
     return eventPublisher_;
 }
 
-void PlaybackController::setAutoAdvanceEnabled(bool enabled) {
-    autoAdvance_.setEnabled(enabled);
-}
-
-bool PlaybackController::isAutoAdvanceEnabled() const {
-    return autoAdvance_.isEnabled();
-}
-
 bool PlaybackController::loadAndPlaySong(const std::filesystem::path& songPath) {
     // This function has to  be called with mutex_ held!
 

@@ -30,21 +30,6 @@ public:
 MusicLibrary scanRoot(const std::filesystem::path& rootDir) const;
 
         /**
-         * Scan user's default Music directory (platform-dependent).
-         * Windows: %USERPROFILE%\Music
-         * Unix/Mac: ~/Music
-         */
-MusicLibrary scanUserMusicDir() const;
-
-        /**
-         * Prompt user for Music directory path and scan it.
-         * Validates that the directory exists before scanning.
-         *
-         * @return MusicLibrary populated from user-provided directory
-         */
-static MusicLibrary scanWithPrompt();
-
-        /**
          * Validate and scan a user-provided path string.
          * Performs security validation on the input before scanning.
          *
@@ -54,9 +39,6 @@ static MusicLibrary scanWithPrompt();
          */
 MusicLibrary scanFromUserInput(const std::string& userInput,
                                                       std::string* outError = nullptr) const;
-const Options& options() const { return options_; }
-        void setOptions(Options options) { options_ = std::move(options); }
-
 private:
         Options options_;
 

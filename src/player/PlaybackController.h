@@ -74,12 +74,6 @@ public:
      */
     PlaybackEventPublisher& getEventPublisher();
 
-    /**
-     * Auto-advance control.
-     */
-    void setAutoAdvanceEnabled(bool enabled);
-    bool isAutoAdvanceEnabled() const;
-
 private:
     bool loadAndPlaySong(const std::filesystem::path& songPath);
     void handleAutoAdvance();
