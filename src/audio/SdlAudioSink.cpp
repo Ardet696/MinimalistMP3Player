@@ -150,10 +150,12 @@ void SdlAudioSink::fill(std::uint8_t* stream, const int len) const {
     if (vol < 100) {
         // SDL_MIX_MAXVOLUME is 128; scale our 0-100 range
         int sdlVol = vol * SDL_MIX_MAXVOLUME / 100;
-        // Clear stream first, then mix scaled audio back
-        // We need a temp copy since SDL_MixAudioFormat adds to dst
-        std::vector<std::uint8_t> tmp(stream, stream + len);
-        std::memset(stream, 0, static_cast<std::size_t>(len));
-        SDL_MixAudioFormat(stream, tmp.data(), AUDIO_S16SYS, static_cast<Uint32>(len), sdlVol);
+        // Copy to pre-allocated buffer, then mix scaled audio back
+        // SDL_MixAudioFormat adds to dst, so we clear stream first
+        const auto byteLen = static_cast<std::size_t>(len);
+        if (mixBuffer_.size() < byteLen) mixBuffer_.resize(byteLen);
+        std::memcpy(mixBuffer_.data(), stream, byteLen);
+        std::memset(stream, 0, byteLen);
+        SDL_MixAudioFormat(stream, mixBuffer_.data(), AUDIO_S16SYS, static_cast<Uint32>(len), sdlVol);
     }
 }

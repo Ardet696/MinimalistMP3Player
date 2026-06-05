@@ -28,6 +28,7 @@ private:
     std::vector<Fft::cd> fftData_;
     std::vector<float> magnitudes_;
     std::vector<float> newBars_;
+    std::vector<double> hannWindow_; // Precomputed Hann window coefficients
 };
 
 #endif // MP3PLAYER_SPECTRUMANALYZER_H

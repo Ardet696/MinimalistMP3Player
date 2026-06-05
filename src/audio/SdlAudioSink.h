@@ -41,6 +41,7 @@ private:
     FrameProvider provider_{};
     bool open_ = false;
     std::atomic<int> volume_{100}; // 0-100
+    mutable std::vector<std::uint8_t> mixBuffer_; // Pre-allocated for volume scaling
 };
 
 #endif

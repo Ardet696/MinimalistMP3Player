@@ -4,7 +4,7 @@
 #include <vector>
 #include <complex>
 
-class Fft // CLASSIC FFT
+class Fft
 {
 public:
     using cd = std::complex<double>;

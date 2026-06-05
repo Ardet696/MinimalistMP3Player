@@ -13,7 +13,12 @@ SpectrumAnalyzer::SpectrumAnalyzer(int barCount)
     , fftData_(FFT_SIZE)
     , magnitudes_(MAGNITUDE_COUNT)
     , newBars_(barCount, 0.0f)
+    , hannWindow_(FFT_SIZE)
 {
+    // Precompute Hann window coefficients once
+    for (int i = 0; i < FFT_SIZE; i++) {
+        hannWindow_[i] = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (FFT_SIZE - 1)));
+    }
 }
 
 void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int channels) {
@@ -31,12 +36,11 @@ void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int
         mono_[i] = sum / channels;
     }
 
-    // Prepare FFT input: pad/truncate to FFT_SIZE, apply Hann window
+    // Prepare FFT input: pad/truncate to FFT_SIZE, apply precomputed Hann window
     std::fill(fftData_.begin(), fftData_.end(), Fft::cd(0.0, 0.0));
     std::size_t len = std::min(monoCount, static_cast<std::size_t>(FFT_SIZE));
     for (std::size_t i = 0; i < len; i++) {
-        double window = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (len - 1)));
-        fftData_[i] = mono_[i] * window;
+        fftData_[i] = mono_[i] * hannWindow_[i];
     }
 
     Fft::compute(fftData_);

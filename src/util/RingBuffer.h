@@ -169,8 +169,9 @@ private:
 
     // Atomic positions for lock-free synchronization
     // These use relaxed/acquire/release memory ordering for performance
-    std::atomic<std::size_t> writePos_;
-    std::atomic<std::size_t> readPos_;
+    // Aligned to separate cache lines to prevent false sharing between producer/consumer
+    alignas(64) std::atomic<std::size_t> writePos_;
+    alignas(64) std::atomic<std::size_t> readPos_;
 };
 
 #endif // MP3PLAYER_RINGBUFFER_H

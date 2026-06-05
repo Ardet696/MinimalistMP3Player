@@ -1,31 +1,37 @@
 #include "Fft.h"
 #include <cmath>
 
-static const double PI = std::acos(-1.0);
-
 void Fft::compute(std::vector<cd>& a, bool invert)
 {
-    int n = a.size();
-    if (n == 1)
-        return;
+    int n = static_cast<int>(a.size());
+    if (n == 1) return;
 
-    std::vector<cd> a0(n / 2), a1(n / 2);
-    for (int i = 0; 2 * i < n; i++) {
-        a0[i] = a[2 * i];
-        a1[i] = a[2 * i + 1];
+    // Bit-reversal permutation (in-place)
+    for (int i = 1, j = 0; i < n; i++) {
+        int bit = n >> 1;
+        for (; j & bit; bit >>= 1)
+            j ^= bit;
+        j ^= bit;
+        if (i < j) std::swap(a[i], a[j]);
     }
-    compute(a0, invert);
-    compute(a1, invert);
 
-    double ang = 2 * PI / n * (invert ? -1 : 1);
-    cd w(1), wn(std::cos(ang), std::sin(ang));
-    for (int i = 0; 2 * i < n; i++) {
-        a[i] = a0[i] + w * a1[i];
-        a[i + n / 2] = a0[i] - w * a1[i];
-        if (invert) {
-            a[i] /= 2;
-            a[i + n / 2] /= 2;
+    // Iterative Cooley-Tukey with precomputed twiddle factor per stage
+    for (int len = 2; len <= n; len <<= 1) {
+        double ang = 2.0 * M_PI / len * (invert ? -1 : 1);
+        cd wn(std::cos(ang), std::sin(ang));
+        for (int i = 0; i < n; i += len) {
+            cd w(1);
+            for (int j = 0; j < len / 2; j++) {
+                cd u = a[i + j];
+                cd v = a[i + j + len / 2] * w;
+                a[i + j]           = u + v;
+                a[i + j + len / 2] = u - v;
+                w *= wn;
+            }
         }
-        w *= wn;
+    }
+
+    if (invert) {
+        for (auto& x : a) x /= n;
     }
 }

@@ -52,6 +52,7 @@ ftxui::Component CreateVisualsCircular(ILibraryService& service) {
     // Each bar becomes a horizontal row: gaugeLeft + gaugeRight mirrored
     // Sine modulation creates a flowing wave shape
     Elements rows;
+    rows.reserve(barCount);
     for (int i = 0; i < barCount; ++i) {
       float amp = (*displayBars)[i];
       // Sine envelope based on bar position + animated phase

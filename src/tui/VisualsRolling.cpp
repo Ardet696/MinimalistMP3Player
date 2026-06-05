@@ -1,7 +1,7 @@
 #include "Visuals.h"
 #include <algorithm>
 #include <cmath>
-#include <vector>
+#include <deque>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/canvas.hpp>
 
@@ -12,7 +12,7 @@ ftxui::Component CreateVisualsRolling(ILibraryService& service) {
   using namespace ftxui;
 
   // Rolling buffer: each entry is the overall energy at that frame
-  auto waveHistory = std::make_shared<std::vector<float>>();
+  auto waveHistory = std::make_shared<std::deque<float>>();
   auto runningPeak = std::make_shared<float>(0.001f);
 
   return Renderer([&service, waveHistory, runningPeak] {
@@ -53,8 +53,8 @@ ftxui::Component CreateVisualsRolling(ILibraryService& service) {
 
     waveHistory->push_back(normalized);
     // Keep enough history for the widest possible canvas
-    if ((int)waveHistory->size() > 2000) {
-      waveHistory->erase(waveHistory->begin());
+    while ((int)waveHistory->size() > 2000) {
+      waveHistory->pop_front();
     }
 
     const auto& gradient = Palette::getCurrentGradient();
