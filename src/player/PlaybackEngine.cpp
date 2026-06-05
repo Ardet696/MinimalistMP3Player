@@ -1,4 +1,9 @@
 #include "PlaybackEngine.h"
+#include "../decode/Mp3Decoder.h"
+#include "../audio/SdlAudioSink.h"
+#include "../util/RingBuffer.h"
+#include "../config/Config.h"
+#include "DecodeThread.h"
 #include <algorithm>
 #include <iostream>
 constexpr int SPECTRUM_BARS = 40;

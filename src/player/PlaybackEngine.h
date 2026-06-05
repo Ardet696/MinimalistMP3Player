@@ -1,19 +1,20 @@
 #ifndef MP3PLAYER_PLAYBACKENGINE_H
 #define MP3PLAYER_PLAYBACKENGINE_H
 
+#include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
-#include <atomic>
 #include <mutex>
 #include <string>
 #include <vector>
-#include "../decode/Mp3Decoder.h"
-#include "../audio/SdlAudioSink.h"
-#include "../util/RingBuffer.h"
-#include "../config/Config.h"
-#include "DecodeThread.h"
 #include "../decode/SpectrumAnalyzer.h"
 #include "../decode/BpmDetector.h"
+
+class Mp3Decoder;
+class SdlAudioSink;
+class DecodeThread;
+template<typename T> class RingBuffer;
 
 /**
  * PlaybackEngine - Controller for MP3 files.
