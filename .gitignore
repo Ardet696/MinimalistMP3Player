@@ -1,9 +1,16 @@
-# Build directories
+#
+# Dotfiles (ignore all, whitelist specific)
+#
+.*
+!.gitignore
+!.github/
+
+#
+# Build output
+#
 build*/
 cmake-build-*/
 out/
-
-# CMake generated files
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
@@ -12,44 +19,47 @@ Makefile
 *.ninja
 .ninja_*
 
+#
 # Compiled objects and binaries
+#
 *.o
 *.obj
-*.a
 *.so
 *.dylib
 *.exe
 MP3Player
 
-# Qt generated files
-*_autogen/
-*.moc
-moc_*.cpp
-ui_*.h
-qrc_*.cpp
-.qmake.stash
+# Ignore .a files except pre-built FTXUI libs
+*.a
+!third_party/ftxui/lib/**/*.a
 
-# IDE - CLion/IntelliJ
-.idea/
-
-# IDE - VS Code
-.vscode/
-
-# IDE - Qt Creator
-*.pro.user
-*.pro.user.*
-CMakeLists.txt.user
-
-# Claude Code
-.claude/
-.cache/
-
-# Internal docs
+#
+# Documentation (Claude-internal, not shipped)
+#
+ClaudeDocumentation/
 docs/
-# OS files
-.DS_Store
-Thumbs.db
+*.md
+!README.md
 
-# Testing
+#
+# Testing and CI (internal dev tooling)
+#
+.github/workflows/ci.yml
+tests/
+third_party/catch2/
 Testing/
 CTestTestfile.cmake
+
+#
+# Scripts (internal dev tooling)
+#
+scripts/test.sh
+scripts/measure_memory.sh
+
+#
+# OS files
+#
+*~
+\#*#
+.DS_Store
+Thumbs.db
