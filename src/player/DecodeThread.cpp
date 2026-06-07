@@ -87,7 +87,7 @@ void DecodeThread::decodeLoop(std::stop_token stopToken) {
 
         // Write  decoded samples to  ring buffer
         const std::size_t samplesToWrite = framesDecoded * channels;
-        const std::size_t samplesWritten = ringBuffer_->write(decodeBuffer.data(), samplesToWrite);
+        ringBuffer_->write(decodeBuffer.data(), samplesToWrite);
 
     }
 

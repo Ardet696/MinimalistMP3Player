@@ -6,8 +6,7 @@
 
 #include "../service/ILibraryService.h"
 
-ftxui::Component CreatePlayingBar(ILibraryService& service, const std::shared_ptr<bool>& reload_flag,
-                                  std::shared_ptr<int> visualIndex)
+ftxui::Component CreatePlayingBar(ILibraryService& service, std::shared_ptr<int> visualIndex)
 {
   using namespace ftxui;
 

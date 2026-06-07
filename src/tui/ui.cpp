@@ -16,7 +16,7 @@ ftxui::Component buildTui(
   using namespace ftxui;
 
   auto file_manager = CreateFileManager(service, reloadFlag);
-  auto playing_bar  = CreatePlayingBar(service, reloadFlag, visualIndex);
+  auto playing_bar  = CreatePlayingBar(service, visualIndex);
   auto user_inputs  = CreateUserInputs(service, config, reloadFlag, visualIndex);
 
   auto layout = Container::Vertical({

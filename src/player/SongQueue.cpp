@@ -134,7 +134,6 @@ bool SongQueue::preWarmSong(const std::filesystem::path& songPath) {
         return false;
     }
 
-    const int sampleRate = decoder.sampleRate();
     const int channels = decoder.channels();
 
     // Decode validation frames to verify file is good
