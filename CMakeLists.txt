@@ -6,7 +6,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 endif()
 
-# ── FTXUI (pre-built static libraries) ────────────────────────
 set(FTXUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/ftxui)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
@@ -53,6 +52,7 @@ if(NOT SDL2_FOUND)
 endif()
 
 add_executable(MP3Player
+    src/main.cpp
     src/tui/ui.cpp
     src/tui/FileManager.cpp
     src/tui/Visuals.cpp
