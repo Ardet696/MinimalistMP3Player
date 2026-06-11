@@ -1,7 +1,11 @@
 #include "PlaybackController.h"
-#include <iostream>
+#include "../events/NotificationBus.h"
 
-PlaybackController::PlaybackController() {
+PlaybackController::PlaybackController(NotificationBus& bus)
+    : engine_(&bus)
+    , queue_(&bus)
+    , bus_(bus)
+{
 }
 
 PlaybackController::~PlaybackController() {
@@ -18,9 +22,8 @@ void PlaybackController::loadAlbum(const std::vector<std::filesystem::path>& son
     queue_.loadPlaylist(songPaths);
 
     if (!songPaths.empty()) {
-        std::cerr << "Album loaded: " << songPaths.size() << " tracks\n";
+        bus_.push("Album loaded: " + std::to_string(songPaths.size()) + " tracks");
 
-        // Start auto-advance monitoring
         autoAdvance_.start(
             [this]() { return shouldAutoAdvance(); },
             [this]() { handleAutoAdvance(); }
@@ -34,7 +37,7 @@ void PlaybackController::play() {
     std::lock_guard lock(mutex_);
 
     if (queue_.getPlaylistSize() == 0) {
-        std::cerr << "No album loaded\n";
+        bus_.push("No album loaded", NotifyLevel::Error);
         return;
     }
 
@@ -44,10 +47,9 @@ void PlaybackController::play() {
         return;
     }
 
-    // If stopped, load current song from queue
     const std::filesystem::path currentSong = queue_.getCurrentSongPath();
     if (currentSong.empty()) {
-        std::cerr << "No current song\n";
+        bus_.push("No current song", NotifyLevel::Error);
         return;
     }
 
@@ -74,7 +76,7 @@ void PlaybackController::next() {
 
     const std::filesystem::path nextSong = queue_.next();
     if (nextSong.empty()) {
-        std::cerr << "End of album reached\n";
+        bus_.push("End of album reached");
         engine_.stop();
         queue_.clear();
         eventPublisher_.publish(PlaybackEvent(PlaybackEventType::AlbumFinished));
@@ -90,7 +92,7 @@ void PlaybackController::previous() {
 
     const std::filesystem::path prevSong = queue_.previous();
     if (prevSong.empty()) {
-        std::cerr << "Already at first song\n";
+        bus_.push("Already at first song");
         return;
     }
 
@@ -112,6 +114,10 @@ bool PlaybackController::isStopped() const {
 
 std::filesystem::path PlaybackController::getCurrentSong() const {
     return queue_.getCurrentSongPath();
+}
+
+std::filesystem::path PlaybackController::getNextSongPath() const {
+    return queue_.getNextSongPath();
 }
 
 int PlaybackController::getCurrentTrackNumber() const {
@@ -158,13 +164,12 @@ bool PlaybackController::loadAndPlaySong(const std::filesystem::path& songPath) 
     engine_.stop();
 
     if (!engine_.load(songPath)) {
-        std::cerr << "Failed to load: " << songPath << "\n";
+        bus_.push("Failed to load: " + songPath.filename().string(), NotifyLevel::Error);
         eventPublisher_.publish(PlaybackEvent(PlaybackEventType::LoadFailed, songPath, 0, 0, "Failed to load song"));
         return false;
     }
 
-    std::cerr << "\nNow playing: " << songPath.filename().string() << "\n";
-    std::cerr << "Track " << getCurrentTrackNumber() << " of " << getTotalTracks() << "\n";
+    bus_.push("Now playing: " + songPath.filename().string());
 
     engine_.play();
 
@@ -175,31 +180,18 @@ bool PlaybackController::loadAndPlaySong(const std::filesystem::path& songPath) 
 void PlaybackController::playSongAtIndex(int index) {
     std::lock_guard lock(mutex_);
 
-    if (currentAlbum_.empty()) {
-        std::cerr << "No album loaded\n";
+    if (queue_.getPlaylistSize() == 0) {
+        bus_.push("No album loaded", NotifyLevel::Error);
         return;
     }
 
-    if (index < 0 || index >= static_cast<int>(currentAlbum_.size())) {
-        std::cerr << "Invalid index: " << index << "\n";
-        return;
-    }
-
-    queue_.loadPlaylist(currentAlbum_);
-    queue_.skipTo(index);
-
-    auto songPath = queue_.getCurrentSongPath();
+    auto songPath = queue_.skipTo(index);
     if (songPath.empty()) {
-        std::cerr << "No song at index: " << index << "\n";
+        bus_.push("Invalid index: " + std::to_string(index), NotifyLevel::Error);
         return;
     }
 
     loadAndPlaySong(songPath);
-
-    autoAdvance_.start(
-        [this]() { return shouldAutoAdvance(); },
-        [this]() { handleAutoAdvance(); }
-    );
 }
 
 void PlaybackController::handleAutoAdvance() {
@@ -210,11 +202,11 @@ void PlaybackController::handleAutoAdvance() {
         return;
     }
 
-    std::cerr << "\nSong finished, auto-advancing...\n";
+    bus_.push("Auto-advancing...");
 
     const std::filesystem::path nextSong = queue_.next();
     if (nextSong.empty()) {
-        std::cerr << "End of album reached\n";
+        bus_.push("End of album reached");
         engine_.stop();
         queue_.clear();
         eventPublisher_.publish(PlaybackEvent(PlaybackEventType::AlbumFinished));

@@ -1,11 +1,13 @@
 #include "SongQueue.h"
-#include <iostream>
 #include <vector>
 #include <span>
 
-SongQueue::SongQueue()
+#include "../events/NotificationBus.h"
+
+SongQueue::SongQueue(NotificationBus* bus)
     : currentIndex_(-1)
     , preWarmedUpTo_(-1)
+    , bus_(bus)
 {
 }
 
@@ -82,6 +84,15 @@ std::filesystem::path SongQueue::skipTo(int index) {
     return playlist_[currentIndex_];
 }
 
+std::filesystem::path SongQueue::getNextSongPath() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    int nextIndex = currentIndex_ + 1;
+    if (nextIndex < 0 || nextIndex >= static_cast<int>(playlist_.size())) {
+        return {};
+    }
+    return playlist_[nextIndex];
+}
+
 bool SongQueue::isNextSongReady() const {
     const int nextIndex = currentIndex_ + 1;
     return preWarmedUpTo_.load() >= nextIndex;
@@ -107,7 +118,6 @@ void SongQueue::preWarmLoop(std::stop_token stopToken) {
         int targetIndex = currentIndex_ + Config::PRE_WARM_AHEAD_COUNT;
         int warmedUpTo = preWarmedUpTo_.load();
 
-        // Pre-decode songs from (warmedUpTo + 1) to targetIndex
         for (int i = warmedUpTo + 1; i <= targetIndex && i < static_cast<int>(playlist_.size()); ++i) {
             if (stopToken.stop_requested()) break;
 
@@ -130,7 +140,7 @@ void SongQueue::preWarmLoop(std::stop_token stopToken) {
 bool SongQueue::preWarmSong(const std::filesystem::path& songPath) {
     Mp3Decoder decoder;
     if (!decoder.open(songPath)) {
-        std::cerr << "[SongQueue] Failed to open: " << songPath << "\n";
+        if (bus_) bus_->push("Pre-warm failed: " + songPath.filename().string(), NotifyLevel::Error);
         return false;
     }
 

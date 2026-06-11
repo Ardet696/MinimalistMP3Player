@@ -2,8 +2,6 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <set>
 #include <thread>
 
@@ -13,6 +11,7 @@
 #include "service/LibraryService.h"
 #include "service/ConfigService.h"
 #include "player/PlaybackController.h"
+#include "events/NotificationBus.h"
 
 static std::set<std::string> snapshotDirectory(const std::string& root) {
   std::set<std::string> entries;
@@ -29,15 +28,11 @@ static std::set<std::string> snapshotDirectory(const std::string& root) {
 int main() {
   using namespace ftxui;
 
-  // Redirect stderr to a log file so prints don't corrupt the TUI.
-  static std::ofstream logFile("/tmp/mp3player.log", std::ios::trunc);
-  std::cerr.rdbuf(logFile.rdbuf());
-
-  // Services
+  NotificationBus bus;
   ConfigService config;
   MusicLibrary library;
-  PlaybackController controller;
-  LibraryService service(library, controller);
+  PlaybackController controller(bus);
+  LibraryService service(library, controller, bus);
 
   // Load persisted config
   std::string savedRoot = config.getRootPath();
@@ -54,11 +49,9 @@ int main() {
   auto reloadFlag  = std::make_shared<bool>(false);
   auto visualIndex = std::make_shared<int>(config.getVisual());
 
-  // Build TUI and screen
   auto screen    = ScreenInteractive::Fullscreen();
   auto component = buildTui(service, config, screen, reloadFlag, visualIndex);
 
-  // Background threads
   std::atomic<bool> running{true};
 
   std::thread refresh([&] {
@@ -89,10 +82,7 @@ int main() {
     }
   });
 
-  // Run
   screen.Loop(component);
-
-  // Shutdown
   running = false;
   controller.stop();
   refresh.join();

@@ -15,18 +15,15 @@ SpectrumAnalyzer::SpectrumAnalyzer(int barCount)
     , newBars_(barCount, 0.0f)
     , hannWindow_(FFT_SIZE)
 {
-    // Precompute Hann window coefficients once
     for (int i = 0; i < FFT_SIZE; i++) {
         hannWindow_[i] = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (FFT_SIZE - 1)));
     }
 }
 
 void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int channels) {
-    // Mix down to mono
     std::size_t monoCount = sampleCount / channels;
     if (monoCount == 0) return;
 
-    // Reuse pre-allocated buffer, resize only if needed (no-op if already large enough)
     if (mono_.size() < monoCount) mono_.resize(monoCount);
 
     for (std::size_t i = 0; i < monoCount; i++) {
@@ -36,7 +33,6 @@ void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int
         mono_[i] = sum / channels;
     }
 
-    // Prepare FFT input: pad/truncate to FFT_SIZE, apply precomputed Hann window
     std::fill(fftData_.begin(), fftData_.end(), Fft::cd(0.0, 0.0));
     std::size_t len = std::min(monoCount, static_cast<std::size_t>(FFT_SIZE));
     for (std::size_t i = 0; i < len; i++) {
@@ -45,15 +41,10 @@ void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int
 
     Fft::compute(fftData_);
 
-    // Compute magnitudes from first half (symmetric for real input)
     for (int i = 0; i < MAGNITUDE_COUNT; i++)
         magnitudes_[i] = static_cast<float>(std::abs(fftData_[i])) / FFT_SIZE;
 
-    // Group into log-scaled bars using true exponential (log-frequency) mapping.
-    // Starts at bin 1 (~43 Hz at 44100/1024) to skip bin 0 (DC component), which
-    // is not a musical frequency and inflates the first bars artificially.
-    // Each bar covers an equal number of octaves, matching human pitch perception.
-    const double logRatio = std::log(static_cast<double>(MAGNITUDE_COUNT)); // ln(512/1)
+    const double logRatio = std::log(static_cast<double>(MAGNITUDE_COUNT));
 
     std::fill(newBars_.begin(), newBars_.end(), 0.0f);
     for (int b = 0; b < barCount_; b++) {
@@ -70,7 +61,6 @@ void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int
         newBars_[b] = sum / (end - start);
     }
 
-    // Normalize bars to 0.0-1.0 range
     float maxBar = *std::max_element(newBars_.begin(), newBars_.end());
     if (maxBar > 0.0f) {
         for (float& v : newBars_)

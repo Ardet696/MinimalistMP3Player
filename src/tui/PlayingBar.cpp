@@ -12,15 +12,12 @@ ftxui::Component CreatePlayingBar(ILibraryService& service, std::shared_ptr<int>
 
   auto displayBars = std::make_shared<std::vector<float>>();
 
-  // Create all alternate visualizer components
   auto vizOscilloscope = CreateVisuals(service);
   auto vizMirrored     = CreateVisualsMirrored(service);
   auto vizRolling      = CreateVisualsRolling(service);
   auto vizCircular     = CreateVisualsCircular(service);
 
-  // Tab container so FTXUI tracks focus for each
   std::vector<Component> vizChildren = {vizOscilloscope, vizMirrored, vizRolling, vizCircular};
-  // Use index offset: visualIndex 0 = spectrum (built-in), 1-4 = alternate visualizers
   auto altIndex = std::make_shared<int>(0);
   auto vizTab = Container::Tab(vizChildren, altIndex.get());
 
@@ -41,7 +38,6 @@ ftxui::Component CreatePlayingBar(ILibraryService& service, std::shared_ptr<int>
     Element vizLayer;
 
     if (*visualIndex == 0) {
-      // Default: spectrum bars
       auto  targetBars = service.getSpectrumBars();
       int   barCount   = static_cast<int>(targetBars.size());
 
@@ -73,7 +69,6 @@ ftxui::Component CreatePlayingBar(ILibraryService& service, std::shared_ptr<int>
         ? text("") | flex
         : hbox(spectrum) | color(grad) | yflex;
     } else {
-      // Alternate visualizer (1-4 mapped to 0-3)
       *altIndex = *visualIndex - 1;
       vizLayer = vizTab->Render() | yflex;
     }

@@ -14,6 +14,7 @@
 class Mp3Decoder;
 class SdlAudioSink;
 class DecodeThread;
+class NotificationBus;
 template<typename T> class RingBuffer;
 
 /**
@@ -30,7 +31,7 @@ public:
         Paused
     };
 
-    PlaybackEngine();
+    explicit PlaybackEngine(NotificationBus* bus = nullptr);
     ~PlaybackEngine();
 
     PlaybackEngine(const PlaybackEngine&) = delete;
@@ -127,6 +128,8 @@ private:
 
     // Volume persisted across sink recreations
     std::atomic<int> volume_{100};
+
+    NotificationBus* bus_;
 };
 
 #endif // MP3PLAYER_PLAYBACKENGINE_H

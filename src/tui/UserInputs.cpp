@@ -10,6 +10,7 @@
 
 #include "../service/ILibraryService.h"
 #include "../service/IConfigService.h"
+#include "../events/NotificationBus.h"
 #include "ftxui/component/event.hpp"
 #include "Palette.h"
 
@@ -267,11 +268,16 @@ ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& conf
 
   return Renderer(component, [component, chatLog, mode, &service] {
     auto now = std::chrono::steady_clock::now();
+
+    for (auto& n : service.getNotificationBus().drain()) {
+      MsgType type = (n.level == NotifyLevel::Error) ? MsgType::Error : MsgType::System;
+      chatLog->push_back({std::move(n.message), type, now});
+      while (chatLog->size() > 8) chatLog->pop_front();
+    }
+
     const auto& gradient = Palette::getCurrentGradient();
     Color dotColor = gradient.size() > 4 ? gradient[4] : Color::White;
     Color userDotColor = gradient.size() > 8 ? gradient[8] : Color::GrayLight;
-
-    // Expire user input messages after 2 seconds, keep system messages longer (6s)
     while (chatLog->size() > 1) {
       auto& front = chatLog->front();
       auto age = std::chrono::duration_cast<std::chrono::milliseconds>(

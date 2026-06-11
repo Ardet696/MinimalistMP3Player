@@ -10,11 +10,13 @@
 
 #include "../util/AudioFormat.h"
 
+class NotificationBus;
+
 class SdlAudioSink {
 public:
     using FrameProvider = std::function<std::size_t(int16_t* dstInterleaved, std::size_t framesRequested)>;
 
-    SdlAudioSink();
+    explicit SdlAudioSink(NotificationBus* bus = nullptr);
     ~SdlAudioSink();
 
     SdlAudioSink(const SdlAudioSink&) = delete;
@@ -41,7 +43,8 @@ private:
     FrameProvider provider_{};
     bool open_ = false;
     std::atomic<int> volume_{100}; // 0-100
-    mutable std::vector<std::uint8_t> mixBuffer_; // Pre-allocated for volume scaling
+    mutable std::vector<std::uint8_t> mixBuffer_;
+    NotificationBus* bus_;
 };
 
 #endif

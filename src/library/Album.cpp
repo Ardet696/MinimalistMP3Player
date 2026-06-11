@@ -1,5 +1,4 @@
 #include "Album.h"
-#include <iostream>
 #include <algorithm>
 
 Album::Album(const std::filesystem::path& dirPath)
@@ -14,30 +13,22 @@ Album::Album(const std::filesystem::path& dirPath)
 
 void Album::loadSongsFromDirectory() {
     if (!std::filesystem::exists(dirPath_) || !std::filesystem::is_directory(dirPath_)) {
-        std::cerr << "Album directory does not exist or is not a directory: " << dirPath_ << "\n";
         return;
     }
 
-    // Iterate through directory entries (non-recursive)
     for (const auto& entry : std::filesystem::directory_iterator(dirPath_)) {
-        // Skip subdirectories - albums can only contain files
         if (entry.is_directory()) {
             continue;
         }
 
-        // Only process .mp3 files
         if (entry.is_regular_file() && entry.path().extension() == ".mp3") {
             try {
-                // Create Song object with album name
                 songs_.emplace_back(entry.path(), title_);
-            } catch (const std::exception& e) {
-                std::cerr << "Failed to load song " << entry.path() << ": " << e.what() << "\n";
-                // Continue with next file
+            } catch (const std::exception&) {
             }
         }
     }
 
-    // Sort songs by filename for consistent ordering
     std::sort(songs_.begin(), songs_.end(), [](const Song& a, const Song& b) {
         return a.getFilePath().filename() < b.getFilePath().filename();
     });

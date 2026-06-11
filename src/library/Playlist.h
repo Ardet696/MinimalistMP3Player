@@ -24,7 +24,6 @@ public:
      */
     explicit Playlist(const std::filesystem::path& dirPath, const std::string& creator = "User");
 
-    // Getters
     std::string getTitle() const { return title_; }
     std::string getCreator() const { return creator_; }
     int getNumSongs() const { return static_cast<int>(songs_.size()); }

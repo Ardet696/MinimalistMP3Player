@@ -23,12 +23,11 @@ private:
     std::vector<float> spectrumMagnitudes_;
     mutable std::mutex mutex_;
 
-    // Pre-allocated work buffers to avoid heap allocations on the audio thread
     std::vector<float> mono_;
     std::vector<Fft::cd> fftData_;
     std::vector<float> magnitudes_;
     std::vector<float> newBars_;
-    std::vector<double> hannWindow_; // Precomputed Hann window coefficients
+    std::vector<double> hannWindow_;
 };
 
 #endif // MP3PLAYER_SPECTRUMANALYZER_H

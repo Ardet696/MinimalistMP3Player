@@ -24,7 +24,6 @@ void PlaybackEventPublisher::unsubscribe(int subscriptionId) {
 void PlaybackEventPublisher::publish(const PlaybackEvent& event) {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    // Call all subscriber callbacks
     for (const auto& sub : subscribers_) {
         if (sub.callback) {
             sub.callback(event);

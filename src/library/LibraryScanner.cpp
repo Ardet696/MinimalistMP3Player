@@ -1,18 +1,13 @@
 #include "LibraryScanner.h"
 #include "../util/PathValidator.h"
-#include <iostream>
 
 MusicLibrary LibraryScanner::scanRoot(const std::filesystem::path& rootDir) const {
     MusicLibrary library;
 
     if (!std::filesystem::exists(rootDir) || !std::filesystem::is_directory(rootDir)) {
-        std::cerr << "Root directory does not exist or is not a directory: " << rootDir << "\n";
         return library;
     }
 
-    std::cerr << "Scanning music library: " << rootDir << "\n";
-
-    // Iterate through top level directories
     for (const auto& entry : std::filesystem::directory_iterator(rootDir)) {
         if (!entry.is_directory()) {
             continue;
@@ -24,8 +19,6 @@ MusicLibrary LibraryScanner::scanRoot(const std::filesystem::path& rootDir) cons
 
         const std::filesystem::path& dirPath = entry.path();
         const std::string dirName = dirPath.filename().string();
-
-        std::cerr << "  Scanning: " << dirName << "...\n";
 
         bool hasMp3Files = false;
         bool hasSubdirectories = false;
@@ -39,53 +32,39 @@ MusicLibrary LibraryScanner::scanRoot(const std::filesystem::path& rootDir) cons
                     hasMp3Files = true;
                 }
             }
-        } catch (const std::exception& e) {
-            std::cerr << "    Error scanning directory: " << e.what() << "\n";
+        } catch (const std::exception&) {
             continue;
         }
 
-        // Discard directories with subdirectories
         if (hasSubdirectories) {
-            std::cerr << "    Skipping (contains subdirectories)\n";
             continue;
         }
         if (!hasMp3Files) {
-            std::cerr << "    Skipping (no MP3 files found)\n";
             continue;
         }
 
-        // Decide if it's an album or playlist based on naming convention for now, treat all as albums
         if (dirName.find("Playlist") != std::string::npos || dirName.find("playlist") != std::string::npos ||
          dirName.find("Mix") != std::string::npos) {
 
             try {
-                Playlist playlist(dirPath); // Create playlist
-                std::cerr << "    Added Playlist: " << playlist.getTitle()
-                          << " (" << playlist.getNumSongs() << " songs)\n";
+                Playlist playlist(dirPath);
                 library.addPlaylist(std::move(playlist));
-            } catch (const std::exception& e) {
-                std::cerr << "    Failed to create playlist: " << e.what() << "\n";
+            } catch (const std::exception&) {
             }
         } else {
             try {
                 Album album(dirPath);
-                std::cerr << "    Added Album: " << album.getTitle()
-                          << " (" << album.getTypeAsString() << ", "
-                          << album.getNumSongs() << " songs)\n";
                 library.addAlbum(std::move(album));
-            } catch (const std::exception& e) {
-                std::cerr << "    Failed to create album: " << e.what() << "\n";
+            } catch (const std::exception&) {
             }
         }
     }
 
-    std::cerr << "\nScan complete!\n";
     return library;
 }
 
 MusicLibrary LibraryScanner::scanFromUserInput(const std::string& userInput,
                                                 std::string* outError) const {
-    // Create validator with security-focused options
     PathValidator::Options validatorOptions;
     validatorOptions.requireExists = true;
     validatorOptions.requireDirectory = true;
@@ -99,10 +78,8 @@ MusicLibrary LibraryScanner::scanFromUserInput(const std::string& userInput,
         if (outError) {
             *outError = result.errorMessage;
         }
-        std::cerr << "Path validation failed: " << result.errorMessage << "\n";
         return {};
     }
 
-    // Path is validated and sanitized - safe to use
     return scanRoot(std::filesystem::path(result.sanitizedPath));
 }

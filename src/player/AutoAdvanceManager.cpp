@@ -18,7 +18,7 @@ void AutoAdvanceManager::start(std::function<bool()> shouldAdvance, AdvanceCallb
     onAdvance_ = std::move(onAdvance);
 
 
-    monitorThread_ = std::jthread([this](std::stop_token stopToken) {// Start monitor thread
+    monitorThread_ = std::jthread([this](std::stop_token stopToken) {
         monitorLoop(stopToken);
     });
 }
@@ -43,15 +43,12 @@ bool AutoAdvanceManager::isEnabled() const {
 
 void AutoAdvanceManager::monitorLoop(std::stop_token stopToken) {
     while (!stopToken.stop_requested()) {
-        // Check if we should advance
         if (enabled_.load(std::memory_order_acquire) && shouldAdvance_ && shouldAdvance_()) {
-            // Trigger advance callback
             if (onAdvance_) {
                 onAdvance_();
             }
         }
 
-        // Sleep before next check
         std::this_thread::sleep_for(Config::AUTO_ADVANCE_POLL_INTERVAL_MS);
     }
 }

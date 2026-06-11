@@ -1,6 +1,9 @@
 #include "LibraryService.h"
 
-LibraryService::LibraryService(MusicLibrary& library, PlaybackController& controller): library_(library), controller_(controller) {}
+LibraryService::LibraryService(MusicLibrary& library, PlaybackController& controller, NotificationBus& bus)
+    : library_(library), controller_(controller), bus_(bus) {}
+
+NotificationBus& LibraryService::getNotificationBus() { return bus_; }
 
 std::vector<std::string> LibraryService::getAlbumNames() const {
     std::lock_guard lock(mutex_);
@@ -57,13 +60,13 @@ void LibraryService::playSong(const std::string& albumName, int songIndex) {
     controller_.setCurrentAlbum(albumName);
 
     std::vector<std::filesystem::path> songPaths;
-    songPaths.reserve(songs.size());
-    for (const auto& song : songs) {
-        songPaths.push_back(song.getFilePath());
+    songPaths.reserve(songs.size() - songIndex);
+    for (int i = songIndex; i < static_cast<int>(songs.size()); ++i) {
+        songPaths.push_back(songs[i].getFilePath());
     }
 
     controller_.loadAlbum(songPaths);
-    controller_.playSongAtIndex(songIndex);
+    controller_.playSongAtIndex(0);
 }
 
 void LibraryService::prevSong() {
@@ -112,20 +115,9 @@ std::string LibraryService::getCurrentSongName() const {
 }
 
 std::string LibraryService::getNextSongName() const {
-    int current = controller_.getCurrentTrackNumber(); // 1-based
-    int total = controller_.getTotalTracks();
-    if (current <= 0 || current >= total) return "";
-    // Get the album songs and return the next one's name
-    std::string album = controller_.getCurrentAlbum();
-    if (album.empty()) return "";
-    std::lock_guard lock(mutex_);
-    const auto* a = library_.findAlbumByTitle(album);
-    if (!a) return "";
-    const auto& songs = a->getSongs();
-    if (current < static_cast<int>(songs.size())) {
-        return songs[current].getTitle(); // current is 1-based, so index = current
-    }
-    return "";
+    auto path = controller_.getNextSongPath();
+    if (path.empty()) return "";
+    return path.stem().string();
 }
 
 void LibraryService::setVolume(int percent) {

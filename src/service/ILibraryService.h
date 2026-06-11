@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+class NotificationBus;
+
 class ILibraryService
 {
     public:
@@ -28,5 +30,6 @@ class ILibraryService
         virtual int  getVolume() const = 0;
         virtual std::vector<std::string> listOutputDevices() const = 0;
         virtual void setOutputDevice(int deviceIndex) = 0;
+        virtual NotificationBus& getNotificationBus() = 0;
 };
 #endif //MP3PLAYER_ILIBRARYSERVICE_H

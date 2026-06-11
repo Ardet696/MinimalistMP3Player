@@ -37,32 +37,26 @@ public:
      * This should be called from the PRODUCER thread only.
      */
     std::size_t write(const T* data, std::size_t count) {
-        // Get current positions
         const std::size_t currentWrite = writePos_.load(std::memory_order_relaxed);
         const std::size_t currentRead = readPos_.load(std::memory_order_acquire);
 
-        // Calculate available space
         const std::size_t available = capacity_ - (currentWrite - currentRead);
         const std::size_t toWrite = std::min(count, available);
 
         if (toWrite == 0) {
-            return 0; // Buffer is full
+            return 0;
         }
 
-        // Write in up to two parts (handle wraparound)
         const std::size_t writeIndex = currentWrite & mask_;
         const std::size_t firstPart = std::min(toWrite, capacity_ - writeIndex);
         const std::size_t secondPart = toWrite - firstPart;
 
-        // Copy first part
         std::memcpy(buffer_.get() + writeIndex, data, firstPart * sizeof(T));
 
-        // Copy second part if needed (wraparound)
         if (secondPart > 0) {
             std::memcpy(buffer_.get(), data + firstPart, secondPart * sizeof(T));
         }
 
-        // Update write position (release semantics ensures data is visible to reader)
         writePos_.store(currentWrite + toWrite, std::memory_order_release);
 
         return toWrite;
@@ -74,27 +68,22 @@ public:
      * This should be called from the CONSUMER thread only.
      */
     std::size_t read(T* data, std::size_t count) {
-        // Get current positions
         const std::size_t currentRead = readPos_.load(std::memory_order_relaxed);
         const std::size_t currentWrite = writePos_.load(std::memory_order_acquire);
 
-        // Calculate available data
         const std::size_t available = currentWrite - currentRead;
         const std::size_t toRead = std::min(count, available);
 
         if (toRead == 0) {
-            return 0; // Buffer is empty
+            return 0;
         }
 
-        // Read in up to two parts (handle wraparound)
         const std::size_t readIndex = currentRead & mask_;
         const std::size_t firstPart = std::min(toRead, capacity_ - readIndex);
         const std::size_t secondPart = toRead - firstPart;
 
-        // Copy first part
         std::memcpy(data, buffer_.get() + readIndex, firstPart * sizeof(T));
 
-        // Copy second part if needed (wraparound)
         if (secondPart > 0) {
             std::memcpy(data + firstPart, buffer_.get(), secondPart * sizeof(T));
         }

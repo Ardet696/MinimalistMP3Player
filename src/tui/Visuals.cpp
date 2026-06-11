@@ -15,7 +15,6 @@ ftxui::Component CreateVisuals(ILibraryService& service) {
   auto displayMags = std::make_shared<std::vector<float>>();
   auto runningPeak = std::make_shared<float>(0.001f);
 
-  // Pre compute logarithmic bin mapping (done once per resize)
   auto logBins = std::make_shared<std::vector<float>>();
   auto lastWidth = std::make_shared<int>(0);
 
@@ -25,7 +24,6 @@ ftxui::Component CreateVisuals(ILibraryService& service) {
       return text("") | flex;
     }
 
-    // Smooth the magnitudes
     if (displayMags->size() != mags.size()) {
       displayMags->assign(mags.size(), 0.f);
     }
@@ -39,7 +37,6 @@ ftxui::Component CreateVisuals(ILibraryService& service) {
       }
     }
 
-    // Adaptive normalization
     float framePeak = *std::max_element(displayMags->begin(), displayMags->end());
     if (framePeak > *runningPeak) {
       *runningPeak = framePeak;
@@ -60,20 +57,17 @@ ftxui::Component CreateVisuals(ILibraryService& service) {
       int binCount = (int)curMags.size();
       if (binCount < 2) return;
 
-      // Rebuild logarithmic bin lookup when width changes
-      int usableBins = binCount / 2;  // Only lower half of FFT is useful
+      int usableBins = binCount / 2;
       if (*lastWidth != w) {
         *lastWidth = w;
         logBins->resize(w);
         for (int x = 0; x < w; ++x) {
-          // Log mapping: spreads bass across more pixels
           float t = (float)x / (float)(w - 1);
           float logIdx = std::pow(t, 2.0f) * (float)(usableBins - 1);
           (*logBins)[x] = logIdx;
         }
       }
 
-      // Sample amplitude at each x using log mapped bins with interpolation
       auto sampleAmplitude = [&](int x) -> float {
         float logIdx = (*logBins)[x];
         int bin0 = (int)logIdx;
@@ -91,7 +85,6 @@ ftxui::Component CreateVisuals(ILibraryService& service) {
         }
         raw = sum / (float)count;
 
-        // Normalize and compress (sqrt boosts quieter frequencies)
         float normalized = std::min(raw * normFactor, 1.0f);
         return std::sqrt(normalized);
       };

@@ -24,7 +24,6 @@ public:
 
     explicit Album(const std::filesystem::path& dirPath);
 
-    // Getters
     std::string getTitle() const { return title_; }
     std::string getArtist() const { return artist_; }
     AlbumType getType() const { return type_; }

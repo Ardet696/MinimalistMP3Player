@@ -11,6 +11,8 @@
 #include "../decode/Mp3Decoder.h"
 #include "../config/Config.h"
 
+class NotificationBus;
+
 /**
  * SongQueue - Prewarms upcoming songs for instant transitions.
  *
@@ -23,7 +25,7 @@
  */
 class SongQueue {
 public:
-    SongQueue();
+    explicit SongQueue(NotificationBus* bus = nullptr);
     ~SongQueue();
 
     SongQueue(const SongQueue&) = delete;
@@ -66,6 +68,7 @@ public:
      */
     int getCurrentIndex() const { return currentIndex_; }
     int getPlaylistSize() const { return static_cast<int>(playlist_.size()); }
+    std::filesystem::path getNextSongPath() const;
 
     /**
      * Clear playlist and stop pre decoding
@@ -81,7 +84,7 @@ private:
     /**
      * Pre decode a specific song decoding the first few frames.
      */
-    static bool preWarmSong(const std::filesystem::path& songPath);
+    bool preWarmSong(const std::filesystem::path& songPath);
 
     std::vector<std::filesystem::path> playlist_;
     int currentIndex_;
@@ -89,6 +92,7 @@ private:
     std::atomic<int> preWarmedUpTo_;  // Index of last pre decoded song
     std::jthread preWarmThread_;
     mutable std::mutex mutex_;
+    NotificationBus* bus_;
 };
 
 #endif // MP3PLAYER_SONGQUEUE_H

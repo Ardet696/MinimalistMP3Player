@@ -9,6 +9,8 @@
 #include "AutoAdvanceManager.h"
 #include "../events/PlaybackEventPublisher.h"
 
+class NotificationBus;
+
 /**
  * PlaybackController - High-level playback orchestration.
  *
@@ -23,7 +25,7 @@
  */
 class PlaybackController {
 public:
-    PlaybackController();
+    explicit PlaybackController(NotificationBus& bus);
     ~PlaybackController();
 
     // Non-copyable
@@ -50,6 +52,7 @@ public:
     bool isStopped() const;
 
     std::filesystem::path getCurrentSong() const;
+    std::filesystem::path getNextSongPath() const;
     int getCurrentTrackNumber() const;
     int getTotalTracks() const;
 
@@ -86,7 +89,8 @@ private:
     std::vector<std::filesystem::path> currentAlbum_;
     std::string currentAlbumName_;
 
-    mutable std::mutex mutex_;  // Protect engine operations from concurrent access
+    mutable std::mutex mutex_;
+    NotificationBus& bus_;
 };
 
 #endif

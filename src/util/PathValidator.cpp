@@ -82,7 +82,7 @@ PathValidator::ValidationResult PathValidator::validate(std::string_view input) 
     result.valid = true;
     result.error = ValidationError::None;
     result.sanitizedPath = normalized;
-    return result; // GO!
+    return result;
 }
 
 std::string PathValidator::getErrorMessage(ValidationError error) {

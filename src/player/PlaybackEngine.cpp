@@ -3,11 +3,11 @@
 #include "../audio/SdlAudioSink.h"
 #include "../util/RingBuffer.h"
 #include "../config/Config.h"
+#include "../events/NotificationBus.h"
 #include "DecodeThread.h"
 #include <algorithm>
-#include <iostream>
 constexpr int SPECTRUM_BARS = 40;
-PlaybackEngine::PlaybackEngine()
+PlaybackEngine::PlaybackEngine(NotificationBus* bus)
     : state_(State::Stopped)
     ,sampleRate_(0)
     ,channels_(0)
@@ -15,6 +15,7 @@ PlaybackEngine::PlaybackEngine()
     , spectrumAnalyzer_(SPECTRUM_BARS)
     , samplesPlayed_(0)
     , totalSamples_(0)
+    , bus_(bus)
 {
 }
 
@@ -29,10 +30,9 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
         stopPlayback();
     }
 
-    decoder_ = std::make_unique<Mp3Decoder>(); // New decoder
+    decoder_ = std::make_unique<Mp3Decoder>();
     if (!decoder_->open(mp3File)) {
-        std::cerr << "Failed to open MP3 file: " << mp3File << "\n";
-        std::cerr << "Error: " << decoder_->lastError() << "\n";
+        if (bus_) bus_->push("Failed to open: " + mp3File.filename().string(), NotifyLevel::Error);
         decoder_.reset();
         return false;
     }
@@ -50,18 +50,15 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
 
     decodeThread_ = std::make_unique<DecodeThread>();
 
-    // Create audio sink with provider lambda
     AudioFormat fmt;
     fmt.sampleRate = sampleRate_;
     fmt.channels = channels_;
 
-    // Audio provider lambda - captures members by pointer since this will outlive the lambda - beautiful lambda right here
     auto audioProvider = [this](int16_t* dst, std::size_t framesRequested) -> std::size_t {
         const std::size_t samplesRequested = framesRequested * channels_;
         const std::size_t samplesRead = ringBuffer_->read(dst, samplesRequested);
         const std::size_t framesRead = samplesRead / channels_;
 
-        // Track end of stream
         if (framesRead == 0) {
             silentCallbacks_.fetch_add(1, std::memory_order_relaxed);
         } else {
@@ -74,9 +71,9 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
         return framesRead;
     };
 
-    sink_ = std::make_unique<SdlAudioSink>();
+    sink_ = std::make_unique<SdlAudioSink>(bus_);
     if (!sink_->open(fmt, audioProvider, outputDeviceName_)) {
-        std::cerr << "Failed to open audio sink\n";
+        if (bus_) bus_->push("Failed to open audio sink", NotifyLevel::Error);
         decoder_->close();
         decoder_.reset();
         ringBuffer_.reset();
@@ -85,10 +82,7 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
         return false;
     }
 
-    // Apply persisted volume to new sink
     sink_->setVolume(volume_.load(std::memory_order_relaxed));
-
-    // Ready to play
     state_.store(State::Stopped, std::memory_order_release);
     return true;
 }
@@ -103,13 +97,13 @@ void PlaybackEngine::play() {
     }
 
     if (!decoder_ || !sink_) {
-        std::cerr << "No file loaded. Call load() first.\n";
+        if (bus_) bus_->push("No file loaded", NotifyLevel::Error);
         return;
     }
 
     if (currentState == State::Stopped) {
         if (!startPlayback()) {
-            std::cerr << "Failed to start playback\n";
+            if (bus_) bus_->push("Failed to start playback", NotifyLevel::Error);
             return;
         }
     } else if (currentState == State::Paused) {
@@ -182,26 +176,22 @@ float PlaybackEngine::getPlaybackProgress() const {
     return std::min(progress, 1.0f);
 }
 
-// Private methods
-
 bool PlaybackEngine::startPlayback() {
-    // Must be called with mutex_ held
 
     if (!decoder_ || !ringBuffer_ || !decodeThread_ || !sink_) {
         return false;
     }
 
-    silentCallbacks_.store(0, std::memory_order_release);    // Reset silent callbacks counter
+    silentCallbacks_.store(0, std::memory_order_release);
 
     decodeThread_->start(decoder_.get(), ringBuffer_.get(), Config::DECODE_CHUNK_FRAMES);
 
-    // Wait for ring buffer to fill up before starting audio playback
     const std::size_t targetSamples = static_cast<std::size_t>(
         ringBuffer_->availableToWrite() * Config::RING_BUFFER_PREFILL_PERCENT
     );
     while (ringBuffer_->availableToRead() < targetSamples) {
         if (decodeThread_->isEndOfStream()) {
-            break;  // Forge if it's very short.
+            break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }

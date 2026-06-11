@@ -7,9 +7,11 @@
 #include "../player/PlaybackController.h"
 #include <mutex>
 
+class NotificationBus;
+
 class LibraryService : public ILibraryService {
 public:
-    explicit LibraryService(MusicLibrary& library, PlaybackController& controller);
+    LibraryService(MusicLibrary& library, PlaybackController& controller, NotificationBus& bus);
 
     std::vector<std::string> getAlbumNames() const override;
     std::vector<std::string> getSongNames(const std::string& album) const override;
@@ -32,11 +34,13 @@ public:
     int  getVolume() const override;
     std::vector<std::string> listOutputDevices() const override;
     void setOutputDevice(int deviceIndex) override;
+    NotificationBus& getNotificationBus() override;
 private:
     MusicLibrary& library_;
     mutable std::mutex mutex_;
     LibraryScanner scanner_;
     PlaybackController& controller_;
+    NotificationBus& bus_;
 };
 
 #endif // MP3PLAYER_LIBRARYSERVICE_H

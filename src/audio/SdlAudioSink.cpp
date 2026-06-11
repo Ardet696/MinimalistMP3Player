@@ -3,10 +3,11 @@
 #include <SDL.h>
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <vector>
 
-SdlAudioSink::SdlAudioSink() = default;
+#include "../events/NotificationBus.h"
+
+SdlAudioSink::SdlAudioSink(NotificationBus* bus) : bus_(bus) {}
 
 SdlAudioSink::~SdlAudioSink() {
     close();
@@ -14,19 +15,18 @@ SdlAudioSink::~SdlAudioSink() {
 
 bool SdlAudioSink::open(const AudioFormat& fmt, FrameProvider provider, const std::string& deviceName, const int desiredBufferFrames) {
     close();
-    // Checks before initializing library SDL
     if (fmt.sampleRate <= 0 || (fmt.channels != 1 && fmt.channels != 2)) {
-        std::cerr << "SdlAudioSink: invalid format\n";
+        if (bus_) bus_->push("Audio: invalid format", NotifyLevel::Error);
         return false;
     }
     if (!provider) {
-        std::cerr << "SdlAudioSink: provider is null\n";
+        if (bus_) bus_->push("Audio: provider is null", NotifyLevel::Error);
         return false;
     }
 
     if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
-            std::cerr << "SDL_InitSubSystem failed: " << SDL_GetError() << "\n";
+            if (bus_) bus_->push(std::string("SDL init failed: ") + SDL_GetError(), NotifyLevel::Error);
             return false;
         }
     }
@@ -39,25 +39,23 @@ bool SdlAudioSink::open(const AudioFormat& fmt, FrameProvider provider, const st
     desired.callback = &SdlAudioSink::sdlCallback;
     desired.userdata = this;
 
-    // Pass device name to SDL (nullptr = system default)
     const char* sdlDeviceName = deviceName.empty() ? nullptr : deviceName.c_str();
 
     SDL_AudioSpec obtained{};
     const SDL_AudioDeviceID dev = SDL_OpenAudioDevice(sdlDeviceName, 0, &desired, &obtained, 0);
     if (dev == 0) {
-        std::cerr << "SDL_OpenAudioDevice failed: " << SDL_GetError() << "\n";
+        if (bus_) bus_->push(std::string("Audio device failed: ") + SDL_GetError(), NotifyLevel::Error);
         return false;
     }
 
     if (obtained.format != AUDIO_S16SYS) {
-        std::cerr << "SDL obtained unsupported format\n";
+        if (bus_) bus_->push("Audio: unsupported format", NotifyLevel::Error);
         SDL_CloseAudioDevice(dev);
         return false;
     }
 
-    // Reject mismatch to avoid resampling complexity.
     if (obtained.freq != desired.freq || obtained.channels != desired.channels) {
-        std::cerr << "SDL obtained different format (freq/ch). Rejecting for now.\n";
+        if (bus_) bus_->push("Audio: format mismatch", NotifyLevel::Error);
         SDL_CloseAudioDevice(dev);
         return false;
     }
@@ -103,7 +101,6 @@ int SdlAudioSink::getVolume() const {
 std::vector<std::string> SdlAudioSink::listOutputDevices() {
     if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
-            std::cerr << "SDL_InitSubSystem failed: " << SDL_GetError() << "\n";
             return {};
         }
     }

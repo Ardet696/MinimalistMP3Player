@@ -37,9 +37,6 @@ public:
     bool isRunning() const;
 
 private:
-    /**
-     * The main decode loop that runs on the background thread.
-     */
     void decodeLoop(std::stop_token stopToken);
 
     Mp3Decoder* decoder_;              // Not owned
