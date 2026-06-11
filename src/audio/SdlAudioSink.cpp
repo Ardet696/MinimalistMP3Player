@@ -63,6 +63,7 @@ bool SdlAudioSink::open(const AudioFormat& fmt, FrameProvider provider, const st
     fmt_ = fmt;
     provider_ = std::move(provider);
     device_ = static_cast<std::uintptr_t>(dev);
+    mixBuffer_.assign(obtained.size, 0);  // preallocate so fill() never allocates
     open_ = true;
     return true;
 }

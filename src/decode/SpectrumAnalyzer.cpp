@@ -2,83 +2,96 @@
 #include <cmath>
 #include <algorithm>
 
-constexpr int FFT_SIZE = 1024;
-constexpr int MAGNITUDE_COUNT = FFT_SIZE / 2;  // 512 usable frequency bins
-
 SpectrumAnalyzer::SpectrumAnalyzer(int barCount)
     : barCount_(barCount)
+    , hannWindow_(kFftSize)
     , bars_(barCount, 0.0f)
-    , spectrumMagnitudes_(MAGNITUDE_COUNT, 0.0f)
-    , mono_(FFT_SIZE)
-    , fftData_(FFT_SIZE)
-    , magnitudes_(MAGNITUDE_COUNT)
-    , newBars_(barCount, 0.0f)
-    , hannWindow_(FFT_SIZE)
+    , spectrumMagnitudes_(kMagnitudeCount, 0.0f)
+    , fftData_(kFftSize)
+    , magnitudes_(kMagnitudeCount, 0.0f)
 {
-    for (int i = 0; i < FFT_SIZE; i++) {
-        hannWindow_[i] = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (FFT_SIZE - 1)));
+    staging_[0].assign(kFftSize, 0.0f);
+    staging_[1].assign(kFftSize, 0.0f);
+    for (int i = 0; i < kFftSize; i++) {
+        hannWindow_[i] = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (kFftSize - 1)));
     }
 }
 
 void SpectrumAnalyzer::feed(const int16_t* samples, std::size_t sampleCount, int channels) {
-    std::size_t monoCount = sampleCount / channels;
+    if (channels <= 0) return;
+    const std::size_t monoCount = sampleCount / static_cast<std::size_t>(channels);
     if (monoCount == 0) return;
 
-    if (mono_.size() < monoCount) mono_.resize(monoCount);
+    const std::size_t n = std::min(monoCount, static_cast<std::size_t>(kFftSize));
+    const int back = stagingBack_;
+    float* dst = staging_[back].data();
 
-    for (std::size_t i = 0; i < monoCount; i++) {
+    for (std::size_t i = 0; i < n; i++) {
         float sum = 0.0f;
         for (int ch = 0; ch < channels; ch++)
             sum += static_cast<float>(samples[i * channels + ch]);
-        mono_[i] = sum / channels;
+        dst[i] = sum / static_cast<float>(channels);
     }
 
+    stagingLen_[back] = n;
+    stagingFront_.store(back, std::memory_order_release);
+    stagingGen_.fetch_add(1, std::memory_order_release);
+    stagingBack_ = 1 - back;
+}
+
+void SpectrumAnalyzer::updateFromStaging() const {
+    const std::uint32_t gen = stagingGen_.load(std::memory_order_acquire);
+    if (gen == lastGen_) return;
+    lastGen_ = gen;
+
+    const int front = stagingFront_.load(std::memory_order_acquire);
+    if (front < 0) return;
+
+    const std::size_t len = std::min(stagingLen_[front], static_cast<std::size_t>(kFftSize));
+    const float* src = staging_[front].data();
+
     std::fill(fftData_.begin(), fftData_.end(), Fft::cd(0.0, 0.0));
-    std::size_t len = std::min(monoCount, static_cast<std::size_t>(FFT_SIZE));
     for (std::size_t i = 0; i < len; i++) {
-        fftData_[i] = mono_[i] * hannWindow_[i];
+        fftData_[i] = src[i] * hannWindow_[i];
     }
 
     Fft::compute(fftData_);
 
-    for (int i = 0; i < MAGNITUDE_COUNT; i++)
-        magnitudes_[i] = static_cast<float>(std::abs(fftData_[i])) / FFT_SIZE;
+    for (int i = 0; i < kMagnitudeCount; i++)
+        magnitudes_[i] = static_cast<float>(std::abs(fftData_[i])) / kFftSize;
 
-    const double logRatio = std::log(static_cast<double>(MAGNITUDE_COUNT));
+    const double logRatio = std::log(static_cast<double>(kMagnitudeCount));
 
-    std::fill(newBars_.begin(), newBars_.end(), 0.0f);
+    std::fill(bars_.begin(), bars_.end(), 0.0f);
     for (int b = 0; b < barCount_; b++) {
         const double t0 = static_cast<double>(b)     / barCount_;
         const double t1 = static_cast<double>(b + 1) / barCount_;
         int start = static_cast<int>(std::exp(t0 * logRatio));  // 1 * exp(t * ln(512))
         int end   = static_cast<int>(std::exp(t1 * logRatio));
         if (end <= start) end = start + 1;
-        if (end > MAGNITUDE_COUNT) end = MAGNITUDE_COUNT;
+        if (end > kMagnitudeCount) end = kMagnitudeCount;
 
         float sum = 0.0f;
         for (int i = start; i < end; i++)
             sum += magnitudes_[i];
-        newBars_[b] = sum / (end - start);
+        bars_[b] = sum / static_cast<float>(end - start);
     }
 
-    float maxBar = *std::max_element(newBars_.begin(), newBars_.end());
+    const float maxBar = *std::max_element(bars_.begin(), bars_.end());
     if (maxBar > 0.0f) {
-        for (float& v : newBars_)
+        for (float& v : bars_)
             v = std::clamp(v / maxBar, 0.0f, 1.0f);
     }
 
-    std::lock_guard lock(mutex_);
-    std::copy(newBars_.begin(), newBars_.end(), bars_.begin());
-    std::copy(magnitudes_.begin(), magnitudes_.end(), spectrumMagnitudes_.begin());
+    spectrumMagnitudes_ = magnitudes_;
 }
 
 std::vector<float> SpectrumAnalyzer::getBars() const {
-    std::lock_guard lock(mutex_);
+    updateFromStaging();
     return bars_;
 }
 
-std::vector<float> SpectrumAnalyzer::getSpectrumMagnitudes() const
-{
-    std::lock_guard lock(mutex_);
+std::vector<float> SpectrumAnalyzer::getSpectrumMagnitudes() const {
+    updateFromStaging();
     return spectrumMagnitudes_;
 }
