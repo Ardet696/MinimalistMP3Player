@@ -92,10 +92,15 @@ add_executable(MP3Player
 )
 
 target_compile_features(MP3Player PRIVATE cxx_std_20)
-set_target_properties(MP3Player PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(MP3Player PROPERTIES CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON)
 target_compile_options(MP3Player PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
+    # Security hardening (non-debug builds parse untrusted MP3 input)
+    $<$<AND:$<CXX_COMPILER_ID:GNU,Clang,AppleClang>,$<NOT:$<CONFIG:Debug>>>:-fstack-protector-strong;-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=2>
 )
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(MP3Player PRIVATE -pie -Wl,-z,relro,-z,now)
+endif()
 
 if(TARGET SDL2::SDL2)
     target_link_libraries(MP3Player PRIVATE SDL2::SDL2)
@@ -163,4 +168,13 @@ if(BUILD_TESTING)
     add_test(NAME unit COMMAND unit_tests)
     add_test(NAME stress COMMAND stress_tests)
     add_test(NAME integration COMMAND integration_tests)
+endif()
+
+option(BUILD_FUZZERS "Build libFuzzer targets (requires Clang)" OFF)
+
+if(BUILD_FUZZERS)
+    add_executable(fuzz_mp3 tests/fuzz/FuzzMp3.cpp)
+    target_compile_features(fuzz_mp3 PRIVATE cxx_std_20)
+    target_compile_options(fuzz_mp3 PRIVATE -g -O1 -fsanitize=fuzzer,address,undefined)
+    target_link_options(fuzz_mp3 PRIVATE -fsanitize=fuzzer,address,undefined)
 endif()
