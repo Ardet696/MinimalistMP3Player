@@ -47,7 +47,9 @@ int main() {
 
   // Shared state between UI and background threads
   auto reloadFlag  = std::make_shared<std::atomic<bool>>(false);
-  auto visualIndex = std::make_shared<int>(config.getVisual());
+  int savedVisual = config.getVisual();
+  if (savedVisual < 0 || savedVisual > 4) savedVisual = 0;
+  auto visualIndex = std::make_shared<int>(savedVisual);
 
   auto screen    = ScreenInteractive::Fullscreen();
   auto component = buildTui(service, config, screen, reloadFlag, visualIndex);

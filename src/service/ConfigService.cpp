@@ -3,6 +3,16 @@
 #include <cstdlib>
 #include <map>
 
+namespace {
+int parseIntOr(const std::string& val, int fallback) {
+    try {
+        return std::stoi(val);
+    } catch (const std::exception&) {
+        return fallback;
+    }
+}
+}
+
 ConfigService::ConfigService() {
 #ifdef _WIN32
     const char* appData = std::getenv("APPDATA");
@@ -59,14 +69,12 @@ std::string ConfigService::getRootPath() const { return getValue("root_path"); }
 void ConfigService::setRootPath(const std::string& path) { setValue("root_path", path); }
 
 int ConfigService::getTheme() const {
-    std::string val = getValue("theme");
-    return val.empty() ? 0 : std::stoi(val);
+    return parseIntOr(getValue("theme"), 0);
 }
 void ConfigService::setTheme(int theme) { setValue("theme", std::to_string(theme)); }
 
 int ConfigService::getVisual() const {
-    std::string val = getValue("visual");
-    return val.empty() ? 0 : std::stoi(val);
+    return parseIntOr(getValue("visual"), 0);
 }
 void ConfigService::setVisual(int visual) { setValue("visual", std::to_string(visual)); }
 
