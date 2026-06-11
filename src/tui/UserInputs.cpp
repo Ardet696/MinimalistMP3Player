@@ -92,7 +92,7 @@ std::string modeLabel(InputMode m) {
 }
 
 ftxui::Component CreateUserInputs(ILibraryService& service, IConfigService& config,
-                                  std::shared_ptr<bool> reload_flag,
+                                  std::shared_ptr<std::atomic<bool>> reload_flag,
                                   std::shared_ptr<int> visualIndex) {
   using namespace ftxui;
   auto input_content = std::make_shared<std::string>();

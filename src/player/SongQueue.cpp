@@ -94,7 +94,7 @@ std::filesystem::path SongQueue::getNextSongPath() const {
 }
 
 bool SongQueue::isNextSongReady() const {
-    const int nextIndex = currentIndex_ + 1;
+    const int nextIndex = currentIndex_.load(std::memory_order_relaxed) + 1;
     return preWarmedUpTo_.load() >= nextIndex;
 }
 
@@ -115,7 +115,7 @@ void SongQueue::clear() {
 
 void SongQueue::preWarmLoop(std::stop_token stopToken) {
     while (!stopToken.stop_requested()) {
-        int targetIndex = currentIndex_ + Config::PRE_WARM_AHEAD_COUNT;
+        int targetIndex = currentIndex_.load(std::memory_order_relaxed) + Config::PRE_WARM_AHEAD_COUNT;
         int warmedUpTo = preWarmedUpTo_.load();
 
         for (int i = warmedUpTo + 1; i <= targetIndex && i < static_cast<int>(playlist_.size()); ++i) {

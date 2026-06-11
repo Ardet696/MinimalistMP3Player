@@ -27,11 +27,11 @@ void DecodeThread::start(Mp3Decoder* decoder, RingBuffer<int16_t>* ringBuffer, s
     ringBuffer_ = ringBuffer;
     chunkFrames_ = chunkFrames;
     endOfStream_.store(false, std::memory_order_release);
+    running_.store(true, std::memory_order_release);
 
     thread_ = std::jthread([this](std::stop_token stopToken) {
         decodeLoop(std::move(stopToken));
     });
-    running_.store(true, std::memory_order_release);
 }
 
 void DecodeThread::stop() {

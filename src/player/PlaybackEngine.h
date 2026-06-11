@@ -103,9 +103,9 @@ private:
     std::atomic<State> state_;
     std::filesystem::path currentFile_;
 
-    // Audio format info
-    int sampleRate_;
-    int channels_;
+    // Audio format info (read lock-free from UI and audio threads)
+    std::atomic<int> sampleRate_;
+    std::atomic<int> channels_;
 
     // Thread synchronization
     mutable std::mutex mutex_;  // Protects all operations
@@ -121,7 +121,7 @@ private:
 
     // Playback progress tracking
     std::atomic<std::uint64_t> samplesPlayed_;
-    std::uint64_t totalSamples_;
+    std::atomic<std::uint64_t> totalSamples_;
 
     // Preferred output device (empty = system default)
     std::string outputDeviceName_;

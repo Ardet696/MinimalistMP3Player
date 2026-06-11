@@ -46,7 +46,7 @@ int main() {
     Palette::setGradient(static_cast<Palette::Theme>(savedTheme));
 
   // Shared state between UI and background threads
-  auto reloadFlag  = std::make_shared<bool>(false);
+  auto reloadFlag  = std::make_shared<std::atomic<bool>>(false);
   auto visualIndex = std::make_shared<int>(config.getVisual());
 
   auto screen    = ScreenInteractive::Fullscreen();

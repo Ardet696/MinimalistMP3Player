@@ -26,7 +26,7 @@ static ftxui::Component WithMouseScroll(ftxui::Component menu, int* selected, co
 }
 
 ftxui::Component CreateFileManager(ILibraryService& service,
-                                   const std::shared_ptr<bool>& reload_flag) {
+                                   const std::shared_ptr<std::atomic<bool>>& reload_flag) {
   using namespace ftxui;
   auto albums = std::make_shared<std::vector<std::string>>(
     service.getAlbumNames()

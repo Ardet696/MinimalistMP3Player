@@ -66,7 +66,7 @@ public:
     /**
      * Get current playlist position.
      */
-    int getCurrentIndex() const { return currentIndex_; }
+    int getCurrentIndex() const { return currentIndex_.load(std::memory_order_relaxed); }
     int getPlaylistSize() const { return static_cast<int>(playlist_.size()); }
     std::filesystem::path getNextSongPath() const;
 
@@ -87,7 +87,7 @@ private:
     bool preWarmSong(const std::filesystem::path& songPath);
 
     std::vector<std::filesystem::path> playlist_;
-    int currentIndex_;
+    std::atomic<int> currentIndex_;
 
     std::atomic<int> preWarmedUpTo_;  // Index of last pre decoded song
     std::jthread preWarmThread_;
