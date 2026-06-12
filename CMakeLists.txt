@@ -120,9 +120,13 @@ option(BUILD_TESTING "Build unit tests" OFF)
 if(BUILD_TESTING)
     enable_testing()
 
-    add_library(Catch2 STATIC third_party/catch2/catch_amalgamated.cpp)
-    target_include_directories(Catch2 PUBLIC third_party/catch2)
-    target_compile_features(Catch2 PUBLIC cxx_std_20)
+    include(FetchContent)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.7.1
+    )
+    FetchContent_MakeAvailable(Catch2)
 
     add_library(mp3player_core STATIC
         src/decode/Fft.cpp
@@ -144,7 +148,7 @@ if(BUILD_TESTING)
         tests/unit/PathValidatorTest.cpp
         tests/unit/ConfigServiceTest.cpp
     )
-    target_link_libraries(unit_tests PRIVATE Catch2 mp3player_core)
+    target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain mp3player_core)
     target_compile_features(unit_tests PRIVATE cxx_std_20)
     target_compile_options(unit_tests PRIVATE
         $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
@@ -153,13 +157,13 @@ if(BUILD_TESTING)
     add_executable(stress_tests
         tests/stress/RingBufferStressTest.cpp
     )
-    target_link_libraries(stress_tests PRIVATE Catch2 mp3player_core)
+    target_link_libraries(stress_tests PRIVATE Catch2::Catch2WithMain mp3player_core)
     target_compile_features(stress_tests PRIVATE cxx_std_20)
 
     add_executable(integration_tests
         tests/integration/Mp3DecoderTest.cpp
     )
-    target_link_libraries(integration_tests PRIVATE Catch2 mp3player_core)
+    target_link_libraries(integration_tests PRIVATE Catch2::Catch2WithMain mp3player_core)
     target_compile_features(integration_tests PRIVATE cxx_std_20)
     target_compile_definitions(integration_tests PRIVATE
         FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures"

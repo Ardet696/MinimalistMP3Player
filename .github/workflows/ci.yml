@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Unit tests
+        run: cd build && ctest --output-on-failure -R unit
+
+      - name: Stress tests
+        run: cd build && ctest --output-on-failure -R stress
+
+      - name: Integration tests
+        run: cd build && ctest --output-on-failure -R integration
+
+  asan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Run tests under ASan/UBSan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: cd build && ctest --output-on-failure
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Configure
+        run: cmake -B build -DBUILD_FUZZERS=ON -DCMAKE_CXX_COMPILER=clang++
+
+      - name: Build fuzzer
+        run: cmake --build build --target fuzz_mp3 -j$(nproc)
+
+      - name: Fuzz smoke run
+        run: |
+          mkdir -p build/corpus
+          cp tests/fixtures/*.mp3 build/corpus/ 2>/dev/null || true
+          ./build/fuzz_mp3 build/corpus -max_total_time=120
+
+  tsan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread -g" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Stress tests under TSan
+        env:
+          TSAN_OPTIONS: halt_on_error=1
+        run: cd build && ctest --output-on-failure -R stress
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install gcc sdl2
+
+      - name: Cache FTXUI libraries
+        id: ftxui-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/ftxui/lib
+          key: ftxui-${{ runner.os }}-${{ hashFiles('scripts/build-ftxui.sh') }}
+
+      - name: Build FTXUI for macOS
+        if: steps.ftxui-cache.outputs.cache-hit != 'true'
+        run: ./scripts/build-ftxui.sh
+
+      - name: Find GCC
+        id: gcc
+        run: |
+          GXX=$(ls /opt/homebrew/bin/g++-* /usr/local/bin/g++-* 2>/dev/null | sort -V | tail -1)
+          echo "compiler=$GXX" >> "$GITHUB_OUTPUT"
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_CXX_COMPILER=${{ steps.gcc.outputs.compiler }}
+
+      - name: Build
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        run: cd build && ctest --output-on-failure

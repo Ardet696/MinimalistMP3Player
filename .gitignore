@@ -42,10 +42,8 @@ docs/
 !README.md
 
 #
-# Testing and CI (internal dev tooling)
+# Test build artifacts
 #
-.github/workflows/ci.yml
-tests/
 third_party/catch2/
 Testing/
 CTestTestfile.cmake
@@ -53,7 +51,6 @@ CTestTestfile.cmake
 #
 # Scripts (internal dev tooling)
 #
-scripts/test.sh
 scripts/measure_memory.sh
 
 #
