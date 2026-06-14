@@ -9,9 +9,11 @@
 #include "tui/Palette.h"
 #include "library/MusicLibrary.h"
 #include "service/LibraryService.h"
+#include "service/AsyncLibraryService.h"
 #include "service/ConfigService.h"
 #include "player/PlaybackController.h"
 #include "events/NotificationBus.h"
+#include "commands/CommandQueue.h"
 
 static std::set<std::string> snapshotDirectory(const std::string& root) {
   std::set<std::string> entries;
@@ -33,6 +35,8 @@ int main() {
   MusicLibrary library;
   PlaybackController controller(bus);
   LibraryService service(library, controller, bus);
+  CommandQueue cmdQueue;
+  AsyncLibraryService asyncService(service, cmdQueue);
 
   // Load persisted config
   std::string savedRoot = config.getRootPath();
@@ -52,7 +56,7 @@ int main() {
   auto visualIndex = std::make_shared<int>(savedVisual);
 
   auto screen    = App::Fullscreen();
-  auto component = buildTui(service, config, screen, reloadFlag, visualIndex);
+  auto component = buildTui(asyncService, config, screen, reloadFlag, visualIndex);
 
   std::atomic<bool> running{true};
 

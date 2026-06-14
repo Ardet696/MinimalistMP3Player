@@ -89,6 +89,8 @@ add_executable(MP3Player
 
     src/service/LibraryService.cpp
     src/service/ConfigService.cpp
+    src/service/AsyncLibraryService.cpp
+    src/commands/CommandQueue.cpp
 )
 
 target_compile_features(MP3Player PRIVATE cxx_std_20)
@@ -181,4 +183,15 @@ if(BUILD_FUZZERS)
     target_compile_features(fuzz_mp3 PRIVATE cxx_std_20)
     target_compile_options(fuzz_mp3 PRIVATE -g -O1 -fsanitize=fuzzer,address,undefined)
     target_link_options(fuzz_mp3 PRIVATE -fsanitize=fuzzer,address,undefined)
+endif()
+
+option(BUILD_BENCHMARKS "Build benchmark executables" OFF)
+
+if(BUILD_BENCHMARKS)
+    add_executable(CommandQueueBench tests/bench/CommandQueueBench.cpp src/commands/CommandQueue.cpp)
+    target_compile_features(CommandQueueBench PRIVATE cxx_std_20)
+    set_target_properties(CommandQueueBench PROPERTIES CXX_EXTENSIONS OFF)
+    target_compile_options(CommandQueueBench PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -O2>
+    )
 endif()
