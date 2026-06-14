@@ -4,7 +4,6 @@
 
 #include "../service/ILibraryService.h"
 #include "ftxui/component/event.hpp"
-#include "Palette.h"
 
 // Wraps a Menu component to add mouse scroll wheel support.
 static ftxui::Component WithMouseScroll(ftxui::Component menu, int* selected, const std::vector<std::string>* items) {
@@ -106,14 +105,6 @@ ftxui::Component CreateFileManager(ILibraryService& service,
       *reload_flag = false;
     }
 
-    std::string currentAlbum = service.getCurrentAlbum();
-    int playingIndex = -1;
-    if (*viewing_songs && !albums->empty() && !currentAlbum.empty()) {
-      if (currentAlbum == (*albums)[*selected_album]) {
-        playingIndex = service.getCurrentTrackIndex();
-      }
-    }
-
     Element content;
     if (albums->empty()) {
       content = vbox({
@@ -126,21 +117,11 @@ ftxui::Component CreateFileManager(ILibraryService& service,
         text("") | flex,
       });
     } else if (*viewing_songs) {
-      if (playingIndex >= 0) {
-        auto playingColor = Palette::getCurrentGradient().at(1);
-        content = vbox({
-          text(" < " + (*albums)[*selected_album]) | bold,
-          separator(),
-          text("▶ Now playing: " + (*current_songs)[playingIndex]) | color(playingColor) | bold,
-          song_with_events->Render() | yframe | yflex,
-        });
-      } else {
-        content = vbox({
-          text(" < " + (*albums)[*selected_album]) | bold,
-          separator(),
-          song_with_events->Render() | yframe | yflex,
-        });
-      }
+      content = vbox({
+        text(" < " + (*albums)[*selected_album]) | bold,
+        separator(),
+        song_with_events->Render() | yframe | yflex,
+      });
     } else {
       content = vbox({
         text("Albums") | bold | center,
