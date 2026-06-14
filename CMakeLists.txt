@@ -188,10 +188,32 @@ endif()
 option(BUILD_BENCHMARKS "Build benchmark executables" OFF)
 
 if(BUILD_BENCHMARKS)
-    add_executable(CommandQueueBench tests/bench/CommandQueueBench.cpp src/commands/CommandQueue.cpp)
-    target_compile_features(CommandQueueBench PRIVATE cxx_std_20)
-    set_target_properties(CommandQueueBench PROPERTIES CXX_EXTENSIONS OFF)
-    target_compile_options(CommandQueueBench PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -O2>
+    function(add_bench target)
+        add_executable(${target} ${ARGN})
+        target_compile_features(${target} PRIVATE cxx_std_20)
+        set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
+        target_compile_options(${target} PRIVATE
+            $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -O2>
+        )
+    endfunction()
+
+    add_bench(CommandQueueBench
+        tests/bench/CommandQueueBench.cpp
+        src/commands/CommandQueue.cpp
+    )
+
+    add_bench(RingBufferBench
+        tests/bench/RingBufferBench.cpp
+    )
+
+    add_bench(SpectrumBench
+        tests/bench/SpectrumBench.cpp
+        src/decode/SpectrumAnalyzer.cpp
+        src/decode/Fft.cpp
+    )
+
+    add_bench(BpmDetectorBench
+        tests/bench/BpmDetectorBench.cpp
+        src/decode/BpmDetector.cpp
     )
 endif()
