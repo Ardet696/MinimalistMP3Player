@@ -6,6 +6,7 @@
 
 #include "ftxui/screen/box.hpp"
 #include "ftxui/screen/screen.hpp"
+#include "ftxui/util/export.hpp"
 
 namespace ftxui {
 class Node;
@@ -15,7 +16,7 @@ class Node;
 ///
 /// It specifies the minimum size required to fully draw the element,
 /// @ingroup dom
-struct Requirement {
+struct FTXUI_EXPORT(DOM) Requirement {
   // The required size to fully draw the element.
   int min_x = 0;
   int min_y = 0;
@@ -35,6 +36,7 @@ struct Requirement {
 
     // Internal for interactions with components.
     bool component_active = false;
+    bool component_focused = false;
 
     // Return whether this requirement should be preferred over the other.
     bool Prefer(const Focused& other) const {
@@ -43,6 +45,9 @@ struct Requirement {
       }
       if (!enabled) {
         return true;
+      }
+      if (other.component_focused != component_focused) {
+        return other.component_focused;
       }
 
       return other.component_active && !component_active;

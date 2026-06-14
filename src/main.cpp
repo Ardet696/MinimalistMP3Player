@@ -1,4 +1,4 @@
-#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/component/app.hpp>
 #include <atomic>
 #include <chrono>
 #include <filesystem>
@@ -51,7 +51,7 @@ int main() {
   if (savedVisual < 0 || savedVisual > 4) savedVisual = 0;
   auto visualIndex = std::make_shared<int>(savedVisual);
 
-  auto screen    = ScreenInteractive::Fullscreen();
+  auto screen    = App::Fullscreen();
   auto component = buildTui(service, config, screen, reloadFlag, visualIndex);
 
   std::atomic<bool> running{true};

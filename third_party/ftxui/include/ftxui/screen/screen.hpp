@@ -11,19 +11,20 @@
 
 #include "ftxui/screen/surface.hpp"   // for Surface
 #include "ftxui/screen/terminal.hpp"  // for Dimensions
+#include "ftxui/util/export.hpp"      // for FTXUI_EXPORT
 
 namespace ftxui {
 
 /// @brief Define how the Screen's dimensions should look like.
 /// @ingroup screen
 namespace Dimension {
-Dimensions Fixed(int);
-Dimensions Full();
+FTXUI_EXPORT(SCREEN) Dimensions Fixed(int);
+FTXUI_EXPORT(SCREEN) Dimensions Full();
 }  // namespace Dimension
 
 /// @brief A rectangular grid of Cell.
 /// @ingroup screen
-class Screen : public Surface {
+class FTXUI_EXPORT(SCREEN) Screen : public Surface {
  public:
   // Constructors:
   Screen(int dimx, int dimy);
@@ -53,7 +54,7 @@ class Screen : public Surface {
     int x = 0;
     int y = 0;
 
-    enum Shape {
+    enum Shape : uint8_t {
       Hidden = 0,
       BlockBlinking = 1,
       Block = 2,
@@ -67,6 +68,16 @@ class Screen : public Surface {
 
   Cursor cursor() const { return cursor_; }
   void SetCursor(Cursor cursor) { cursor_ = cursor; }
+
+  // ABI Reserve:
+  void Reserved1() override;
+  void Reserved2() override;
+  void Reserved3() override;
+  void Reserved4() override;
+  void Reserved5() override;
+  void Reserved6() override;
+  void Reserved7() override;
+  void Reserved8() override;
 
   // Store an hyperlink in the screen. Return the id of the hyperlink. The id is
   // used to identify the hyperlink when the user click on it.

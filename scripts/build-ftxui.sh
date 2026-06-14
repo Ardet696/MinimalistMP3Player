@@ -8,7 +8,7 @@
 #
 set -euo pipefail
 
-FTXUI_VERSION="a0ffdd6cf859b242a6f0f83780cf7a5e0f36056d"
+FTXUI_VERSION="d120f349b7e7b50584ea79a75a2523a5a66a087f"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FTXUI_DIR="$REPO_ROOT/third_party/ftxui"
 BUILD_DIR="$(mktemp -d)"

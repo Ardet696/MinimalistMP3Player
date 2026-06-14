@@ -9,7 +9,7 @@
 ftxui::Component buildTui(
     ILibraryService& service,
     IConfigService& config,
-    ftxui::ScreenInteractive& screen,
+    ftxui::App& screen,
     std::shared_ptr<std::atomic<bool>> reloadFlag,
     std::shared_ptr<int> visualIndex)
 {

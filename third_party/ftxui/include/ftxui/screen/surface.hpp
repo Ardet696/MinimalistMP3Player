@@ -9,12 +9,16 @@
 
 #include "ftxui/screen/box.hpp"   // for Box
 #include "ftxui/screen/cell.hpp"  // for Cell
+#include "ftxui/util/export.hpp"  // for FTXUI_EXPORT
 
 namespace ftxui {
 
 /// @brief A rectangular grid of Cell.
+///
+/// @note This class was previously named Image.
+///
 /// @ingroup screen
-class Surface {
+class FTXUI_EXPORT(SCREEN) Surface {
  public:
   // Constructors:
   Surface() = delete;
@@ -42,12 +46,25 @@ class Surface {
   // Fill the surface with space and default style
   void Clear();
 
+  // ABI Reserve:
+  virtual void Reserved1();
+  virtual void Reserved2();
+  virtual void Reserved3();
+  virtual void Reserved4();
+  virtual void Reserved5();
+  virtual void Reserved6();
+  virtual void Reserved7();
+  virtual void Reserved8();
+
   Box stencil;
 
  protected:
+  Cell& FastCellAt(int x, int y);
+  const Cell& FastCellAt(int x, int y) const;
+
   int dimx_;
   int dimy_;
-  std::vector<std::vector<Cell>> cells_;
+  std::vector<Cell> cells_;
 };
 
 }  // namespace ftxui

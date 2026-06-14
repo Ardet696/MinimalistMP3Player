@@ -4,6 +4,10 @@
 #ifndef FTXUI_DOM_FLEXBOX_CONFIG_HPP
 #define FTXUI_DOM_FLEXBOX_CONFIG_HPP
 
+#include <cstdint>
+
+#include "ftxui/util/export.hpp"  // for FTXUI_EXPORT
+
 /*
   This replicate the CSS flexbox model.
   See guide for documentation:
@@ -24,12 +28,12 @@ namespace ftxui {
 /// containers in a terminal user interface.
 ///
 /// @ingroup dom
-struct FlexboxConfig {
+struct FTXUI_EXPORT(DOM) FlexboxConfig {
   /// This establishes the main-axis, thus defining the direction flex items are
   /// placed in the flex container. Flexbox is (aside wrapping) single-direction
   /// layout concept. Think of flex items as primarily laying out either in
   /// horizontal rows or vertical columns.
-  enum class Direction {
+  enum class Direction : uint8_t {
     Row,            ///< Flex items are laid out in a row.
     RowInversed,    ///< Flex items are laid out in a row, but in reverse order.
     Column,         ///< Flex items are laid out in a column.
@@ -40,7 +44,7 @@ struct FlexboxConfig {
 
   /// By default, flex items will all try to fit onto one line. You can change
   /// that and allow the items to wrap as needed with this property.
-  enum class Wrap {
+  enum class Wrap : uint8_t {
     NoWrap,        ///< Flex items will all try to fit onto one line.
     Wrap,          ///< Flex items will wrap onto multiple lines.
     WrapInversed,  ///< Flex items will wrap onto multiple lines, but in reverse
@@ -53,7 +57,7 @@ struct FlexboxConfig {
   /// inflexible, or are flexible but have reached their maximum size. It also
   /// exerts some control over the alignment of items when they overflow the
   /// line.
-  enum class JustifyContent {
+  enum class JustifyContent : uint8_t {
     /// Items are aligned to the start of flexbox's direction.
     FlexStart,
     /// Items are aligned to the end of flexbox's direction.
@@ -80,7 +84,7 @@ struct FlexboxConfig {
   /// This defines the default behavior for how flex items are laid out along
   /// the cross axis on the current line. Think of it as the justify-content
   /// version for the cross-axis (perpendicular to the main-axis).
-  enum class AlignItems {
+  enum class AlignItems : uint8_t {
     FlexStart,  ///< items are placed at the start of the cross axis.
     FlexEnd,    ///< items are placed at the end of the cross axis.
     Center,     ///< items are centered along the cross axis.
@@ -91,7 +95,7 @@ struct FlexboxConfig {
   // This aligns a flex container’s lines within when there is extra space in
   // the cross-axis, similar to how justify-content aligns individual items
   // within the main-axis.
-  enum class AlignContent {
+  enum class AlignContent : uint8_t {
     FlexStart,     ///< items are placed at the start of the cross axis.
     FlexEnd,       ///< items are placed at the end of the cross axis.
     Center,        ///< items are centered along the cross axis.

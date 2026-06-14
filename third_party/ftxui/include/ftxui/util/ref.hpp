@@ -11,6 +11,8 @@
 #include <variant>
 #include <vector>
 
+#include "ftxui/util/export.hpp"
+
 namespace ftxui {
 
 /// @brief An adapter. Own or reference an immutable object.
@@ -42,8 +44,10 @@ class ConstRef {
   std::variant<T, const T*> variant_ = T{};
 
   const T* Address() const {
-    return std::holds_alternative<T>(variant_) ? &std::get<T>(variant_)
-                                               : std::get<const T*>(variant_);
+    if (const T* t = std::get_if<T>(&variant_)) {
+      return t;
+    }
+    return std::get<const T*>(variant_);
   }
 };
 
@@ -81,18 +85,22 @@ class Ref {
   std::variant<T, T*> variant_ = T{};
 
   const T* Address() const {
-    return std::holds_alternative<T>(variant_) ? &std::get<T>(variant_)
-                                               : std::get<T*>(variant_);
+    if (const T* t = std::get_if<T>(&variant_)) {
+      return t;
+    }
+    return std::get<T*>(variant_);
   }
   T* Address() {
-    return std::holds_alternative<T>(variant_) ? &std::get<T>(variant_)
-                                               : std::get<T*>(variant_);
+    if (T* t = std::get_if<T>(&variant_)) {
+      return t;
+    }
+    return std::get<T*>(variant_);
   }
 };
 
 /// @brief An adapter. Own or reference a constant string. For convenience, this
 /// class convert multiple mutable string toward a shared representation.
-class StringRef : public Ref<std::string> {
+class FTXUI_EXPORT(SCREEN) StringRef : public Ref<std::string> {
  public:
   using Ref<std::string>::Ref;
 
@@ -109,7 +117,7 @@ class StringRef : public Ref<std::string> {
 
 /// @brief An adapter. Own or reference a constant string. For convenience, this
 /// class convert multiple immutable string toward a shared representation.
-class ConstStringRef : public ConstRef<std::string> {
+class FTXUI_EXPORT(SCREEN) ConstStringRef : public ConstRef<std::string> {
  public:
   using ConstRef<std::string>::ConstRef;
 
@@ -138,7 +146,7 @@ class ConstStringRef : public ConstRef<std::string> {
 /// - `std::vector<std::wstring>*`
 /// - `Adapter*`
 /// - `std::unique_ptr<Adapter>`
-class ConstStringListRef {
+class FTXUI_EXPORT(SCREEN) ConstStringListRef {
  public:
   // Bring your own adapter:
   class Adapter {
@@ -215,7 +223,8 @@ class ConstStringListRef {
     std::string_view operator()(const std::vector<std::string_view>* v) const {
       return (*v)[i];
     }
-    std::string_view operator()(const std::vector<std::wstring>* v) const {
+    std::string_view operator()(
+        [[maybe_unused]] const std::vector<std::wstring>* v) const {
       return "";  // Temporary fix: Cannot return a view to a temporary
                   // conversion.
     }

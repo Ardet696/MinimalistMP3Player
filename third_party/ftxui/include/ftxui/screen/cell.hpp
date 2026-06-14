@@ -7,12 +7,16 @@
 #include <cstdint>                 // for uint8_t
 #include <string>                  // for string, basic_string, allocator
 #include "ftxui/screen/color.hpp"  // for Color, Color::Default
+#include "ftxui/util/export.hpp"
 
 namespace ftxui {
 
 /// @brief A Unicode character and its associated style.
+///
+/// @note This struct was previously named Pixel.
+///
 /// @ingroup screen
-struct Cell {
+struct FTXUI_EXPORT(SCREEN) Cell {
   Cell()
       : blink(false),
         bold(false),
