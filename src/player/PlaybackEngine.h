@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <vector>
 #include "../decode/SpectrumAnalyzer.h"
@@ -106,9 +105,6 @@ private:
     // Audio format info (read lock-free from UI and audio threads)
     std::atomic<int> sampleRate_;
     std::atomic<int> channels_;
-
-    // Thread synchronization
-    mutable std::mutex mutex_;  // Protects all operations
 
     // End-of-stream detection
     std::atomic<int> silentCallbacks_;

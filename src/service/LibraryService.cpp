@@ -1,4 +1,5 @@
 #include "LibraryService.h"
+#include <shared_mutex>
 
 LibraryService::LibraryService(MusicLibrary& library, PlaybackController& controller, NotificationBus& bus)
     : library_(library), controller_(controller), bus_(bus) {}
@@ -6,7 +7,7 @@ LibraryService::LibraryService(MusicLibrary& library, PlaybackController& contro
 NotificationBus& LibraryService::getNotificationBus() { return bus_; }
 
 std::vector<std::string> LibraryService::getAlbumNames() const {
-    std::lock_guard lock(mutex_);
+    std::shared_lock lock(mutex_);
     std::vector<std::string> names;
     for (const auto& album : library_.getAlbums()) {
         names.push_back(album.getTitle());
@@ -15,7 +16,7 @@ std::vector<std::string> LibraryService::getAlbumNames() const {
 }
 
 std::vector<std::string> LibraryService::getSongNames(const std::string& albumName) const {
-    std::lock_guard lock(mutex_);
+    std::shared_lock lock(mutex_);
     const auto* album = library_.findAlbumByTitle(albumName);
     if (!album) return {};
 
@@ -27,7 +28,7 @@ std::vector<std::string> LibraryService::getSongNames(const std::string& albumNa
 }
 
 std::vector<std::vector<std::string>> LibraryService::getAllSongNames() const {
-    std::lock_guard lock(mutex_);
+    std::shared_lock lock(mutex_);
     std::vector<std::vector<std::string>> all;
     for (const auto& album : library_.getAlbums()) {
         std::vector<std::string> names;
@@ -50,21 +51,22 @@ bool LibraryService::setRootPath(const std::string& path, std::string& outError)
 }
 
 void LibraryService::playSong(const std::string& albumName, int songIndex) {
-    std::lock_guard lock(mutex_);
-    const auto* album = library_.findAlbumByTitle(albumName);
-    if (!album) return;
-
-    const auto& songs = album->getSongs();
-    if (songIndex < 0 || songIndex >= static_cast<int>(songs.size())) return;
-
-    controller_.setCurrentAlbum(albumName);
-
     std::vector<std::filesystem::path> songPaths;
-    songPaths.reserve(songs.size() - songIndex);
-    for (int i = songIndex; i < static_cast<int>(songs.size()); ++i) {
-        songPaths.push_back(songs[i].getFilePath());
+    {
+        std::shared_lock lock(mutex_);
+        const auto* album = library_.findAlbumByTitle(albumName);
+        if (!album) return;
+
+        const auto& songs = album->getSongs();
+        if (songIndex < 0 || songIndex >= static_cast<int>(songs.size())) return;
+
+        songPaths.reserve(songs.size() - songIndex);
+        for (int i = songIndex; i < static_cast<int>(songs.size()); ++i) {
+            songPaths.push_back(songs[i].getFilePath());
+        }
     }
 
+    controller_.setCurrentAlbum(albumName);
     controller_.loadAlbum(songPaths);
     controller_.playSongAtIndex(0);
 }

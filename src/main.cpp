@@ -33,9 +33,9 @@ int main() {
   NotificationBus bus;
   ConfigService config;
   MusicLibrary library;
-  PlaybackController controller(bus);
-  LibraryService service(library, controller, bus);
   CommandQueue cmdQueue;
+  PlaybackController controller(bus, cmdQueue);
+  LibraryService service(library, controller, bus);
   AsyncLibraryService asyncService(service, cmdQueue);
 
   // Load persisted config
@@ -90,7 +90,6 @@ int main() {
 
   screen.Loop(component);
   running = false;
-  controller.stop();
   refresh.join();
   dirWatcher.join();
 

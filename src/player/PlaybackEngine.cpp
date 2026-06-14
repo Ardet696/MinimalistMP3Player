@@ -24,8 +24,6 @@ PlaybackEngine::~PlaybackEngine() {
 }
 
 bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
-    std::lock_guard lock(mutex_);
-
     if (state_.load(std::memory_order_acquire) != State::Stopped) {
         stopPlayback();
     }
@@ -88,8 +86,6 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
 }
 
 void PlaybackEngine::play() {
-    std::lock_guard lock(mutex_);
-
     const State currentState = state_.load(std::memory_order_acquire);
 
     if (currentState == State::Playing) {
@@ -114,8 +110,6 @@ void PlaybackEngine::play() {
 }
 
 void PlaybackEngine::pause() {
-    std::lock_guard lock(mutex_);
-
     if (state_.load(std::memory_order_acquire) != State::Playing) {
         return;
     }
@@ -128,7 +122,6 @@ void PlaybackEngine::pause() {
 }
 
 void PlaybackEngine::stop() {
-    std::lock_guard lock(mutex_);
     stopPlayback();
 }
 
@@ -153,7 +146,6 @@ bool PlaybackEngine::hasReachedEndOfStream() const {
 }
 
 std::filesystem::path PlaybackEngine::getCurrentFile() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return currentFile_;
 }
 
@@ -202,7 +194,6 @@ bool PlaybackEngine::startPlayback() {
 
 void PlaybackEngine::setVolume(int percent) {
     volume_.store(std::clamp(percent, 0, 100), std::memory_order_relaxed);
-    std::lock_guard lock(mutex_);
     if (sink_) sink_->setVolume(percent);
 }
 
@@ -211,12 +202,10 @@ int PlaybackEngine::getVolume() const {
 }
 
 void PlaybackEngine::setOutputDevice(const std::string& deviceName) {
-    std::lock_guard lock(mutex_);
     outputDeviceName_ = deviceName;
 }
 
 std::string PlaybackEngine::getOutputDevice() const {
-    std::lock_guard lock(mutex_);
     return outputDeviceName_;
 }
 

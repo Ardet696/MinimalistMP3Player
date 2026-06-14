@@ -5,7 +5,7 @@
 #include "../library/MusicLibrary.h"
 #include "../library/LibraryScanner.h"
 #include "../player/PlaybackController.h"
-#include <mutex>
+#include <shared_mutex>
 
 class NotificationBus;
 
@@ -37,7 +37,7 @@ public:
     NotificationBus& getNotificationBus() override;
 private:
     MusicLibrary& library_;
-    mutable std::mutex mutex_;
+    mutable std::shared_mutex mutex_;
     LibraryScanner scanner_;
     PlaybackController& controller_;
     NotificationBus& bus_;
