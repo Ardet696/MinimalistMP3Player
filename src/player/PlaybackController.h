@@ -3,11 +3,11 @@
 
 #include <filesystem>
 #include <vector>
-#include <mutex>
 #include "PlaybackEngine.h"
 #include "SongQueue.h"
 #include "AutoAdvanceManager.h"
 #include "../events/PlaybackEventPublisher.h"
+#include "../commands/CommandQueue.h"
 
 class NotificationBus;
 
@@ -25,7 +25,7 @@ class NotificationBus;
  */
 class PlaybackController {
 public:
-    explicit PlaybackController(NotificationBus& bus);
+    explicit PlaybackController(NotificationBus& bus, CommandQueue& cmdQueue);
     ~PlaybackController();
 
     // Non-copyable
@@ -89,8 +89,8 @@ private:
     std::vector<std::filesystem::path> currentAlbum_;
     std::string currentAlbumName_;
 
-    mutable std::mutex mutex_;
     NotificationBus& bus_;
+    CommandQueue& cmdQueue_;
 };
 
 #endif

@@ -1,10 +1,11 @@
 #include "PlaybackController.h"
 #include "../events/NotificationBus.h"
 
-PlaybackController::PlaybackController(NotificationBus& bus)
+PlaybackController::PlaybackController(NotificationBus& bus, CommandQueue& cmdQueue)
     : engine_(&bus)
     , queue_(&bus)
     , bus_(bus)
+    , cmdQueue_(cmdQueue)
 {
 }
 
@@ -15,10 +16,7 @@ PlaybackController::~PlaybackController() {
 void PlaybackController::loadAlbum(const std::vector<std::filesystem::path>& songPaths) {
     stop();
 
-    {
-        std::lock_guard lock(mutex_);
-        currentAlbum_ = songPaths;
-    }
+    currentAlbum_ = songPaths;
     queue_.loadPlaylist(songPaths);
 
     if (!songPaths.empty()) {
@@ -26,7 +24,7 @@ void PlaybackController::loadAlbum(const std::vector<std::filesystem::path>& son
 
         autoAdvance_.start(
             [this]() { return shouldAutoAdvance(); },
-            [this]() { handleAutoAdvance(); }
+            [this]() { cmdQueue_.enqueue([this]() { handleAutoAdvance(); }); }
         );
 
         eventPublisher_.publish(PlaybackEvent(PlaybackEventType::TrackChanged));
@@ -34,8 +32,6 @@ void PlaybackController::loadAlbum(const std::vector<std::filesystem::path>& son
 }
 
 void PlaybackController::play() {
-    std::lock_guard lock(mutex_);
-
     if (queue_.getPlaylistSize() == 0) {
         bus_.push("No album loaded", NotifyLevel::Error);
         return;
@@ -57,13 +53,11 @@ void PlaybackController::play() {
 }
 
 void PlaybackController::pause() {
-    std::lock_guard lock(mutex_);
     engine_.pause();
     eventPublisher_.publish(PlaybackEvent(PlaybackEventType::SongPaused));
 }
 
 void PlaybackController::stop() {
-    std::lock_guard lock(mutex_);
     engine_.stop();
     queue_.clear();
     autoAdvance_.stop();
@@ -72,8 +66,6 @@ void PlaybackController::stop() {
 }
 
 void PlaybackController::next() {
-    std::lock_guard lock(mutex_);
-
     const std::filesystem::path nextSong = queue_.next();
     if (nextSong.empty()) {
         bus_.push("End of album reached");
@@ -88,8 +80,6 @@ void PlaybackController::next() {
 }
 
 void PlaybackController::previous() {
-    std::lock_guard lock(mutex_);
-
     const std::filesystem::path prevSong = queue_.previous();
     if (prevSong.empty()) {
         bus_.push("Already at first song");
@@ -178,8 +168,6 @@ bool PlaybackController::loadAndPlaySong(const std::filesystem::path& songPath) 
 }
 
 void PlaybackController::playSongAtIndex(int index) {
-    std::lock_guard lock(mutex_);
-
     if (queue_.getPlaylistSize() == 0) {
         bus_.push("No album loaded", NotifyLevel::Error);
         return;
@@ -195,13 +183,6 @@ void PlaybackController::playSongAtIndex(int index) {
 }
 
 void PlaybackController::handleAutoAdvance() {
-    // Use try_lock to avoid blocking the auto-advance thread
-    std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
-    if (!lock.owns_lock()) {
-        // Mutex is busy, skip this iteration
-        return;
-    }
-
     bus_.push("Auto-advancing...");
 
     const std::filesystem::path nextSong = queue_.next();
@@ -226,7 +207,6 @@ int PlaybackController::getVolume() const {
 }
 
 void PlaybackController::setOutputDevice(const std::string& deviceName) {
-    std::lock_guard lock(mutex_);
     engine_.setOutputDevice(deviceName);
 
     // If currently playing, reload the current song through the new device
