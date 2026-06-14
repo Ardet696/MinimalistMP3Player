@@ -12,19 +12,19 @@
 
 Pre-built binaries for Linux (x86_64) and macOS (arm64) are available on the [GitHub Releases](https://github.com/ardet696/MinimalistMP3Player/releases) page. Download the binary for your platform, make it executable, and run. You only need SDL2 installed:
 
-| Platform | Install SDL2 |
-|----------|-------------|
-| Arch | `sudo pacman -S sdl2` |
-| Ubuntu / Debian | `sudo apt install libsdl2-2.0-0` |
-| Fedora | `sudo dnf install SDL2` |
-| macOS | `brew install sdl2` |
+| Platform | Install SDL2             |
+|----------|--------------------------|
+| Arch | sudo pacman -S sdl2      |
+| Ubuntu / Debian | sudo apt install libsdl2-2.0-0 |
+| Fedora | sudo dnf install SDL2    |
+| macOS | brew install sdl2        |
 
 ```bash
 chmod +x mp3player-linux-x86_64
 ./mp3player-linux-x86_64
 ```
 
-### Arch Linux (AUR) 
+### Arch Linux (AUR)
 
 ```bash
 yay -S minimalist-mp3-player
@@ -36,9 +36,9 @@ Install dependencies:
 
 | Distro | Command |
 |--------|---------|
-| Arch | `sudo pacman -S sdl2 cmake gcc` |
-| Ubuntu / Debian | `sudo apt install libsdl2-dev cmake g++` |
-| Fedora | `sudo dnf install SDL2-devel cmake gcc-c++` |
+| Arch | sudo pacman -S sdl2 cmake gcc |
+| Ubuntu / Debian | sudo apt install libsdl2-dev cmake g++|
+| Fedora | sudo dnf install SDL2-devel cmake gcc-c++|
 
 ```bash
 git clone https://github.com/ardet696/MinimalistMP3Player.git
@@ -50,7 +50,7 @@ cmake --build build -j$(nproc)
 ./build/MP3Player
 ```
 
-> Note: Avoid using `sudo cmake --install build` if you plan to use the AUR package later, both install to different paths and the manual install takes priority.
+> Note: Avoid using sudo cmake --install build if you plan to use the AUR package later — both install to different paths and the manual install takes priority.
 
 ### macOS
 
@@ -61,7 +61,7 @@ brew install gcc sdl2 cmake
 
 ./scripts/build-ftxui.sh
 
-ls /opt/homebrew/bin/g++-*  
+ls /opt/homebrew/bin/g++-*
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-14
 cmake --build build -j$(sysctl -n hw.ncpu)
@@ -69,30 +69,23 @@ cmake --build build -j$(sysctl -n hw.ncpu)
 ./build/MP3Player
 ```
 
-
 ---
 
-## How to use
+### First launch? You need to set your music root directory.
 
-### First launch? You have set  your music root directory.
-The idea of this Player has been built around the concept of an "Album Player" or "Playlist Player".
-The program will look for directories with mp3 files in the music root dir,  that can be considered as an "Album" or "Playlist".
+The player is built around the concept of an "Album Player" or "Playlist Player". It looks for directories containing MP3 files inside your music root each subdirectory is treated as an album or playlist.
 
-- When the MP3Player is launched, it will show in the left side of the TUI the list of albums detected.
-On first launch the file manager will be empty.
+- On first launch the file manager will be empty.
+- Type `RootConfig` in the command bar and press Enter, then type the full path to your music directory (e.g. `/home/user/Music`) and press Enter again.
 
-- Type RootConfig in the command bar and press Enter, then type the full path to your music directory (e.g. `/home/user/Music`) and press Enter again. 
-
-
-In the following screenshot, there is in the MP3Player TUI showing the detected albums, in the right side the "ls" of that music directory.
-For example the ".png" image s discarded, I do not recommend using a different structure than this for the music directory since it has been developed to follow this pattern.
+In the screenshot below, the left side shows detected albums; the right side shows the contents of that music directory. Non-MP3 files (images, etc.) are ignored.
 
 ![RootExample](images/RootAlbums.png)
 
 ### Command terminal emulator
 
-The command panel works like a mini config-chat. 
-Some commands: play, stop, next, prev, help, fileHelp.
+The command panel works like a mini config terminal.
 
-Commands like volume, output, visuals, themes, and RootConfig enter an interactive mode that waits for your selection. Press `Esc` at any time to cancel and return to the normal command input.
+Some commands: `play`, `stop`, `next`, `prev`, `help`, `fileHelp`.
 
+Commands like `volume`, `output`, `visuals`, `themes`, and `RootConfig` enter an interactive mode that waits for your selection. Press `Esc` at any time to cancel and return to normal command input.
