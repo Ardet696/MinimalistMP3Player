@@ -6,14 +6,7 @@
 #include <filesystem>
 #include "Song.h"
 
-/**
- * Album - Represents a music album containing songs from a single directory.
- *
- * Rules:
- *   - Only contains .mp3 files from a single directory
- *   - Cannot contain subdirectories
- *   - All songs automatically tagged with album name from directory
- */
+
 class Album {
 public:
     enum class AlbumType {
@@ -38,7 +31,6 @@ public:
     int getTotalDurationSeconds() const;
     std::string getFormattedTotalDuration() const;
 
-    // Song access
     const Song* getSongByIndex(int index) const;
 
 private:

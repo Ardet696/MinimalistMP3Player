@@ -16,9 +16,7 @@ Song::Song(const std::filesystem::path& filePath, const std::string& albumName)
 }
 
 void Song::extractMetadata() {
-    // This is 100-1000x faster than decoding the entire file!
 
-    // Get file size
     if (!std::filesystem::exists(filePath_)) {
         durationSeconds_ = 0;
         type_ = SongType::Standard;

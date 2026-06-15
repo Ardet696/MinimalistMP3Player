@@ -1,8 +1,7 @@
 #include "Playlist.h"
 #include <algorithm>
 
-Playlist::Playlist(const std::filesystem::path& dirPath, const std::string& creator)
-    : dirPath_(dirPath)
+Playlist::Playlist(const std::filesystem::path& dirPath, const std::string& creator) : dirPath_(dirPath)
     , title_(dirPath.filename().string())  // Directory name as playlist title
     , creator_(creator)
 {

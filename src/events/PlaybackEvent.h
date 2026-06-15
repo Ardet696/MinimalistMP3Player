@@ -4,12 +4,6 @@
 #include <filesystem>
 #include <string>
 
-/**
- * PlaybackEvent - Events that occur during playback.
- *
- * Used by PlaybackEventPublisher to notify observers (UI, logging, etc.)
- * of state changes.
- */
 enum class PlaybackEventType {
     SongStarted,
     SongPaused,

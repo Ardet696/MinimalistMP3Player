@@ -3,7 +3,11 @@
 #include <vector>
 #include <mutex>
 
-enum class NotifyLevel { Info, Error };
+enum class NotifyLevel
+{
+    Info,
+    Error
+};
 
 struct Notification {
     std::string message;

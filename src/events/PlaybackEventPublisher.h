@@ -7,7 +7,7 @@
 #include <mutex>
 
 /**
- * PlaybackEventPublisher - Observer pattern for playback events.
+ *  Observer pattern for playback events.
  *
  * Allows UI and other components to subscribe to playback state changes
  * without tight coupling.
@@ -21,23 +21,8 @@ public:
     PlaybackEventPublisher(const PlaybackEventPublisher&) = delete;
     PlaybackEventPublisher& operator=(const PlaybackEventPublisher&) = delete;
 
-    /**
-     * Subscribe to playback events.
-     * @param callback Function to call when events occur
-     * @return Subscription ID
-     */
     int subscribe(EventCallback callback);
-
-    /**
-     * Unsubscribe from playback events.
-     * @param subscriptionId ID returned from subscribe()
-     */
     void unsubscribe(int subscriptionId);
-
-    /**
-     * Publish an event to all subscribers.
-     * Thread-safe.
-     */
     void publish(const PlaybackEvent& event);
 
 private:
@@ -51,4 +36,4 @@ private:
     int nextId_{0};
 };
 
-#endif // MP3PLAYER_PLAYBACKEVENTPUBLISHER_H
+#endif

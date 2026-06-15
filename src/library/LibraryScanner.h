@@ -16,29 +16,14 @@ public:
         };
         LibraryScanner() = default;
         explicit LibraryScanner(Options& options) : options_(std::move(options)) {}
-
         /**
-         * Scan the given root directory and return a populated MusicLibrary.
-         *
-         * @param rootDir  Root directory containing album folders (e.g., C:\Users\name\Music).
-         * @return         MusicLibrary containing albums and songs with minimal metadata (paths/names).
-         *
          * Throws:
          * - std::filesystem::filesystem_error on I/O errors (implementation may also choose to swallow
          *   errors and skip problematic entries; decide in .cpp).
          */
-MusicLibrary scanRoot(const std::filesystem::path& rootDir) const;
+        MusicLibrary scanRoot(const std::filesystem::path& rootDir) const;
 
-        /**
-         * Validate and scan a user-provided path string.
-         * Performs security validation on the input before scanning.
-         *
-         * @param userInput Raw user input string (path to music directory)
-         * @param outError Optional output parameter for error message if validation fails
-         * @return MusicLibrary populated from validated path, or empty library on failure
-         */
-MusicLibrary scanFromUserInput(const std::string& userInput,
-                                                      std::string* outError = nullptr) const;
+        MusicLibrary scanFromUserInput(const std::string& userInput, std::string* outError = nullptr) const;
 private:
         Options options_;
 

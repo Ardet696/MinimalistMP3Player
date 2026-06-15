@@ -7,7 +7,7 @@ class AsyncLibraryService : public ILibraryService {
 public:
     AsyncLibraryService(ILibraryService& real, CommandQueue& queue);
 
-    // Mutating — enqueued (TUI thread returns immediately)
+    // Mutating  enqueued (TUI thread returns immediately)
     void playSong(const std::string& album, int songIndex) override;
     void prevSong() override;
     void nextSong() override;
@@ -16,10 +16,9 @@ public:
     void setVolume(int percent) override;
     void setOutputDevice(int deviceIndex) override;
 
-    // Synchronous — returns a result the caller uses immediately
+    // Synchronous returns a result the caller uses immediately
     bool setRootPath(const std::string& path, std::string& outError) override;
 
-    // Read pass-through
     std::vector<std::string> getAlbumNames() const override;
     std::vector<std::string> getSongNames(const std::string& album) const override;
     std::vector<std::vector<std::string>> getAllSongNames() const override;

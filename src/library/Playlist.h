@@ -6,22 +6,9 @@
 #include <filesystem>
 #include "Song.h"
 
-/**
- * Songs retain their original album name from their parent directory.
- *
- * Rules:
- *   - Only contains .mp3 files from a single directory
- *   - Cannot contain subdirectories (become discarded)
- */
 class Playlist {
 public:
-    /**
-     * Create a Playlist from a directory path.
-     * Scans directory for .mp3 files and creates Song objects.
-     *
-     * @param dirPath - Path to playlist directory
-     * @param creator - Name of the playlist creator (default: "User")
-     */
+
     explicit Playlist(const std::filesystem::path& dirPath, const std::string& creator = "User");
 
     std::string getTitle() const { return title_; }

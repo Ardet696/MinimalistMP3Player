@@ -6,14 +6,6 @@
 #include "Album.h"
 #include "Playlist.h"
 
-/**
- * MusicLibrary - Container for all albums and playlists scanned from ~/Music directory.
- *
- * Structure:
- *   ~/Music/
- *     Album1/       -> Album object
- *     Playlist1/    -> Playlist object
- */
 class MusicLibrary {
 public:
     MusicLibrary() = default;

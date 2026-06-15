@@ -6,11 +6,9 @@
 #include <filesystem>
 
 /**
- * AlbumInfo - Lightweight album metadata (no song loading at construction).
+ *  Lightweight album metadata (no song loading at construction).
  *
- *   - Song names loaded only when user selects this album
- *   - No MP3 decoding, no duration calculation, no heavy IO
- *
+ *   - Song names loaded only when user selects this album, no MP3 decoding, no duration calculation, no heavy IO
  */
 class AlbumInfo {
 public:
@@ -24,7 +22,7 @@ public:
     const std::vector<std::string>& getSongFilenames() const { return songFilenames_; }
 
     /**
-     * Lazily load song filenames from directory, call this only when user selects this album.
+     *  load song filenames from directory, call this only when user selects this album.
      * Returns number of songs found.
      */
     int loadSongNames();
@@ -33,7 +31,7 @@ public:
 private:
     std::filesystem::path dirPath_;
     std::string title_;
-    std::vector<std::string> songFilenames_;  // Pure File names
+    std::vector<std::string> songFilenames_;
     bool songsLoaded_;
 };
 
