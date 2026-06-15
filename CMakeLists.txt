@@ -55,6 +55,7 @@ add_executable(MP3Player
     src/main.cpp
     src/tui/ui.cpp
     src/tui/FileManager.cpp
+    src/tui/ScreenRefreshTimer.cpp
     src/tui/VisualsBase.cpp
     src/tui/Visuals.cpp
     src/tui/VisualsMirrored.cpp
@@ -85,6 +86,7 @@ add_executable(MP3Player
     src/decode/Fft.cpp
 
     src/util/PathValidator.cpp
+    src/util/DirectoryWatcher.cpp
 
     src/events/PlaybackEventPublisher.cpp
 

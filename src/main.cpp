@@ -1,12 +1,11 @@
 #include <ftxui/component/app.hpp>
 #include <atomic>
-#include <chrono>
-#include <filesystem>
-#include <set>
-#include <thread>
+#include <memory>
 
 #include "tui/ui.h"
 #include "tui/Palette.h"
+#include "tui/ScreenRefreshTimer.h"
+#include "util/DirectoryWatcher.h"
 #include "library/MusicLibrary.h"
 #include "service/LibraryService.h"
 #include "service/AsyncLibraryService.h"
@@ -15,21 +14,7 @@
 #include "events/NotificationBus.h"
 #include "commands/CommandQueue.h"
 
-static std::set<std::string> snapshotDirectory(const std::string& root) {
-  std::set<std::string> entries;
-  if (root.empty()) return entries;
-  std::error_code ec;
-  for (const auto& entry : std::filesystem::directory_iterator(root, ec)) {
-    if (entry.is_directory(ec)) {
-      entries.insert(entry.path().filename().string());
-    }
-  }
-  return entries;
-}
-
 int main() {
-  using namespace ftxui;
-
   NotificationBus bus;
   ConfigService config;
   MusicLibrary library;
@@ -38,7 +23,6 @@ int main() {
   LibraryService service(library, controller, bus);
   AsyncLibraryService asyncService(service, cmdQueue);
 
-  // Load persisted config
   std::string savedRoot = config.getRootPath();
   if (!savedRoot.empty()) {
     std::string error;
@@ -49,49 +33,24 @@ int main() {
   if (savedTheme >= 0 && savedTheme <= 3)
     Palette::setGradient(static_cast<Palette::Theme>(savedTheme));
 
-  // Shared state between UI and background threads
   auto reloadFlag  = std::make_shared<std::atomic<bool>>(false);
-  int savedVisual = config.getVisual();
+  int savedVisual  = config.getVisual();
   if (savedVisual < 0 || savedVisual > 4) savedVisual = 0;
   auto visualIndex = std::make_shared<int>(savedVisual);
 
-  auto screen    = App::Fullscreen();
+  auto screen    = ftxui::App::Fullscreen();
   auto component = buildTui(asyncService, config, screen, reloadFlag, visualIndex);
 
-  std::atomic<bool> running{true};
+  ScreenRefreshTimer refreshTimer(screen, std::chrono::milliseconds(33));
 
-  std::thread refresh([&] {
-    while (running) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(33));
-      screen.PostEvent(Event::Custom);
-    }
-  });
-
-  std::thread dirWatcher([&] {
-    auto lastSnapshot = snapshotDirectory(config.getRootPath());
-    while (running) {
-      for (int i = 0; i < 20 && running; ++i)
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      if (!running) break;
-
-      std::string root = config.getRootPath();
-      if (root.empty()) continue;
-
-      auto currentSnapshot = snapshotDirectory(root);
-      if (currentSnapshot != lastSnapshot) {
-        lastSnapshot = currentSnapshot;
-        std::string error;
-        service.setRootPath(root, error);
-        *reloadFlag = true;
-        screen.PostEvent(Event::Custom);
-      }
-    }
+  DirectoryWatcher dirWatcher(config, [&](const std::string& root) {
+    std::string error;
+    service.setRootPath(root, error);
+    *reloadFlag = true;
+    screen.PostEvent(ftxui::Event::Custom);
   });
 
   screen.Loop(component);
-  running = false;
-  refresh.join();
-  dirWatcher.join();
 
   return EXIT_SUCCESS;
 }
