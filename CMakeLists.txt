@@ -55,6 +55,7 @@ add_executable(MP3Player
     src/main.cpp
     src/tui/ui.cpp
     src/tui/FileManager.cpp
+    src/tui/VisualsBase.cpp
     src/tui/Visuals.cpp
     src/tui/VisualsMirrored.cpp
     src/tui/VisualsRolling.cpp
