@@ -1,6 +1,6 @@
 #pragma once
 #include <ftxui/component/component.hpp>
 #include <memory>
-class ILibraryService;
+class IVisualizationSource;
 
-ftxui::Component CreatePlayingBar(ILibraryService& service, std::shared_ptr<int> visualIndex);
+ftxui::Component CreatePlayingBar(IVisualizationSource& service, std::shared_ptr<int> visualIndex);

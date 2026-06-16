@@ -4,17 +4,17 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/screen/color.hpp>
 
-class ILibraryService;
+class IVisualizationSource;
 
 class VisualsBase {
 public:
-    explicit VisualsBase(ILibraryService& service);
+    explicit VisualsBase(IVisualizationSource& service);
     virtual ~VisualsBase() = default;
 
     virtual ftxui::Element render() = 0;
 
 protected:
-    ILibraryService& service_;
+    IVisualizationSource& service_;
     std::vector<float> displayBars_;
 
     const std::vector<ftxui::Color>& palette() const;

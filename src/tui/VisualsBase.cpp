@@ -1,8 +1,8 @@
 #include "VisualsBase.h"
 #include "Palette.h"
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
-VisualsBase::VisualsBase(ILibraryService& service) : service_(service) {}
+VisualsBase::VisualsBase(IVisualizationSource& service) : service_(service) {}
 
 const std::vector<ftxui::Color>& VisualsBase::palette() const {
     return Palette::getCurrentGradient();

@@ -2,11 +2,11 @@
 #include "VisualsBase.h"
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/linear_gradient.hpp>
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
 class VisualsMirrored : public VisualsBase {
 public:
-    explicit VisualsMirrored(ILibraryService& service) : VisualsBase(service) {}
+    explicit VisualsMirrored(IVisualizationSource& service) : VisualsBase(service) {}
 
     ftxui::Element render() override {
         smoothBars();
@@ -46,7 +46,7 @@ public:
     }
 };
 
-ftxui::Component CreateVisualsMirrored(ILibraryService& service) {
+ftxui::Component CreateVisualsMirrored(IVisualizationSource& service) {
     auto self = std::make_shared<VisualsMirrored>(service);
     return ftxui::Renderer([self] { return self->render(); });
 }

@@ -3,11 +3,11 @@
 #include <cmath>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/linear_gradient.hpp>
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
 class VisualsCircular : public VisualsBase {
 public:
-    explicit VisualsCircular(ILibraryService& service) : VisualsBase(service) {}
+    explicit VisualsCircular(IVisualizationSource& service) : VisualsBase(service) {}
 
     ftxui::Element render() override {
         smoothBars();
@@ -46,7 +46,7 @@ private:
     int frameCount_ = 0;
 };
 
-ftxui::Component CreateVisualsCircular(ILibraryService& service) {
+ftxui::Component CreateVisualsCircular(IVisualizationSource& service) {
     auto self = std::make_shared<VisualsCircular>(service);
     return ftxui::Renderer([self] { return self->render(); });
 }

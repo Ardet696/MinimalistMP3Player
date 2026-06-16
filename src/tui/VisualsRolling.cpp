@@ -5,11 +5,11 @@
 #include <deque>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/canvas.hpp>
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
 class VisualsRolling : public VisualsBase {
 public:
-    VisualsRolling(ILibraryService& service) : VisualsBase(service) {}
+    VisualsRolling(IVisualizationSource& service) : VisualsBase(service) {}
 
     ftxui::Element render() override {
         auto mags = service_.getSpectrumMagnitudes();
@@ -89,7 +89,7 @@ private:
     float runningPeak_ = 0.001f;
 };
 
-ftxui::Component CreateVisualsRolling(ILibraryService& service) {
+ftxui::Component CreateVisualsRolling(IVisualizationSource& service) {
     auto self = std::make_shared<VisualsRolling>(service);
     return ftxui::Renderer([self] { return self->render(); });
 }

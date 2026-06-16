@@ -5,11 +5,11 @@
 #include <vector>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/canvas.hpp>
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
 class VisualsOscilloscope : public VisualsBase {
 public:
-    explicit VisualsOscilloscope(ILibraryService& service) : VisualsBase(service) {}
+    explicit VisualsOscilloscope(IVisualizationSource& service) : VisualsBase(service) {}
 
     ftxui::Element render() override {
         auto mags = service_.getSpectrumMagnitudes();
@@ -111,7 +111,7 @@ private:
     int lastWidth_ = 0;
 };
 
-ftxui::Component CreateVisuals(ILibraryService& service) {
+ftxui::Component CreateVisuals(IVisualizationSource& service) {
     auto self = std::make_shared<VisualsOscilloscope>(service);
     return ftxui::Renderer([self] { return self->render(); });
 }

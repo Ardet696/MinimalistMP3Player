@@ -4,9 +4,9 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/linear_gradient.hpp>
 
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
-ftxui::Component CreatePlayingBar(ILibraryService& service, std::shared_ptr<int> visualIndex)
+ftxui::Component CreatePlayingBar(IVisualizationSource& service, std::shared_ptr<int> visualIndex)
 {
   using namespace ftxui;
 

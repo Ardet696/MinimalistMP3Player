@@ -2,7 +2,8 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-#include "../service/ILibraryService.h"
+#include "../service/ILibraryQuery.h"
+#include "../service/IPlaybackControl.h"
 #include "ftxui/component/event.hpp"
 
 // Wraps a Menu component to add mouse scroll wheel support.
@@ -24,14 +25,14 @@ static ftxui::Component WithMouseScroll(ftxui::Component menu, int* selected, co
   });
 }
 
-ftxui::Component CreateFileManager(ILibraryService& service,
+ftxui::Component CreateFileManager(ILibraryQuery& query, IPlaybackControl& control,
                                    const std::shared_ptr<std::atomic<bool>>& reload_flag) {
   using namespace ftxui;
   auto albums = std::make_shared<std::vector<std::string>>(
-    service.getAlbumNames()
+    query.getAlbumNames()
   );
   auto songs_per_album = std::make_shared<std::vector<std::vector<std::string>>>(
-    service.getAllSongNames()
+    query.getAllSongNames()
   );
 
   auto selected_album = std::make_shared<int>(0);
@@ -66,21 +67,21 @@ ftxui::Component CreateFileManager(ILibraryService& service,
   auto scrollable_album_menu = WithMouseScroll(album_menu, selected_album.get(), albums.get());
   auto scrollable_song_menu  = WithMouseScroll(song_menu, selected_song.get(), current_songs.get());
 
-  auto album_with_enter = CatchEvent(scrollable_album_menu, [=, &service](Event event) {
+  auto album_with_enter = CatchEvent(scrollable_album_menu, [=, &control](Event event) {
     if (event == Event::Return && !albums->empty()) {
       *current_songs = (*songs_per_album)[*selected_album];
       *viewing_songs = true;
       *tab_index = 1;
       *selected_song = 0;
-      service.playSong((*albums)[*selected_album], 0);
+      control.playSong((*albums)[*selected_album], 0);
       return true;
     }
     return false;
   });
 
-  auto song_with_events = CatchEvent(scrollable_song_menu, [=, &service](Event event) {
+  auto song_with_events = CatchEvent(scrollable_song_menu, [=, &control](Event event) {
     if (event == Event::Return && !current_songs->empty()) {
-      service.playSong((*albums)[*selected_album], *selected_song);
+      control.playSong((*albums)[*selected_album], *selected_song);
       return true;
     }
     if (event == Event::Backspace) {
@@ -93,10 +94,10 @@ ftxui::Component CreateFileManager(ILibraryService& service,
 
   auto container = Container::Tab({album_with_enter, song_with_events}, tab_index.get());
 
-  return Renderer(container, [=, &service] {
+  return Renderer(container, [=, &query] {
     if (*reload_flag) {
-      *albums = service.getAlbumNames();
-      *songs_per_album = service.getAllSongNames();
+      *albums = query.getAlbumNames();
+      *songs_per_album = query.getAllSongNames();
       *current_songs = albums->empty() ? std::vector<std::string>{} : (*songs_per_album)[0];
       *selected_album = 0;
       *selected_song = 0;

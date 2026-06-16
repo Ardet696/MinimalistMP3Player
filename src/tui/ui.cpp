@@ -5,6 +5,7 @@
 #include "FileManager.h"
 #include "PlayingBar.h"
 #include "UserInputs.h"
+#include "../service/ILibraryService.h"
 
 ftxui::Component buildTui(
     ILibraryService& service,
@@ -15,7 +16,7 @@ ftxui::Component buildTui(
 {
   using namespace ftxui;
 
-  auto file_manager = CreateFileManager(service, reloadFlag);
+  auto file_manager = CreateFileManager(service, service, reloadFlag);
   auto playing_bar  = CreatePlayingBar(service, visualIndex);
   auto user_inputs  = CreateUserInputs(service, config, reloadFlag, visualIndex);
 

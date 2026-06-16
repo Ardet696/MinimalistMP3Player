@@ -2,10 +2,10 @@
 #include <ftxui/component/component.hpp>
 #include <memory>
 
-class ILibraryService;
+class IVisualizationSource;
 
-ftxui::Component CreateVisuals(ILibraryService& service);
-ftxui::Component CreateVisualsMirrored(ILibraryService& service);
-ftxui::Component CreateVisualsRolling(ILibraryService& service);
-ftxui::Component CreateVisualsCircular(ILibraryService& service);
-ftxui::Component CreateVisualsPanel(ILibraryService& service, std::shared_ptr<int> activeIndex);
+ftxui::Component CreateVisuals(IVisualizationSource& service);
+ftxui::Component CreateVisualsMirrored(IVisualizationSource& service);
+ftxui::Component CreateVisualsRolling(IVisualizationSource& service);
+ftxui::Component CreateVisualsCircular(IVisualizationSource& service);
+ftxui::Component CreateVisualsPanel(IVisualizationSource& service, std::shared_ptr<int> activeIndex);

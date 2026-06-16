@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 
-class ILibraryService;
+class ILibraryQuery;
+class IPlaybackControl;
 
-ftxui::Component CreateFileManager(ILibraryService& service, const std::shared_ptr<std::atomic<bool>>& reload_flag);
+ftxui::Component CreateFileManager(ILibraryQuery& query, IPlaybackControl& control, const std::shared_ptr<std::atomic<bool>>& reload_flag);

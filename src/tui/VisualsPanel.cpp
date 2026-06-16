@@ -3,9 +3,9 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 
-#include "../service/ILibraryService.h"
+#include "../service/IVisualizationSource.h"
 
-ftxui::Component CreateVisualsPanel(ILibraryService& service, std::shared_ptr<int> activeIndex) {
+ftxui::Component CreateVisualsPanel(IVisualizationSource& service, std::shared_ptr<int> activeIndex) {
   using namespace ftxui;
 
   std::vector<Component> visualizers = {
