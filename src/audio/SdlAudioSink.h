@@ -9,27 +9,28 @@
 #include <vector>
 
 #include "../util/AudioFormat.h"
+#include "IAudioSink.h"
 
 class NotificationBus;
 
-class SdlAudioSink {
+class SdlAudioSink : public IAudioSink {
 public:
-    using FrameProvider = std::function<std::size_t(int16_t* dstInterleaved, std::size_t framesRequested)>;
+    using FrameProvider = IAudioSink::FrameProvider;
 
     explicit SdlAudioSink(NotificationBus* bus = nullptr);
-    ~SdlAudioSink();
+    ~SdlAudioSink() override;
 
     SdlAudioSink(const SdlAudioSink&) = delete;
     SdlAudioSink& operator=(const SdlAudioSink&) = delete;
 
-    bool open(const AudioFormat& fmt, FrameProvider provider, const std::string& deviceName = "", int desiredBufferFrames = 2048);
-    void start() const;
-    void stop() const;
-    void close();
-    bool isOpen() const;
+    bool open(const AudioFormat& fmt, FrameProvider provider, const std::string& deviceName = "", int desiredBufferFrames = 2048) override;
+    void start() const override;
+    void stop() const override;
+    void close() override;
+    bool isOpen() const override;
 
-    void setVolume(int percent);   // 0-100
-    int  getVolume() const;
+    void setVolume(int percent) override;   // 0-100
+    int  getVolume() const override;
 
     /// List available audio output device names via SDL.
     static std::vector<std::string> listOutputDevices();

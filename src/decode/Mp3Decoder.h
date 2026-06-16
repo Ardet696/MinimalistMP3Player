@@ -8,6 +8,8 @@
 #include <span>
 #include <string>
 
+#include "IAudioDecoder.h"
+
 /**
  * MP3 -> PCM decoder (int16_t) using minimp3.
  *
@@ -18,10 +20,10 @@
  * Units:
  * - 1 frame = 1 sample per channel
  */
-class Mp3Decoder {
+class Mp3Decoder : public IAudioDecoder {
 public:
     Mp3Decoder();
-    ~Mp3Decoder();
+    ~Mp3Decoder() override;
 
     // Resource owning type: non-copyable, movable.
     Mp3Decoder(const Mp3Decoder&) = delete;
@@ -29,20 +31,20 @@ public:
     Mp3Decoder(Mp3Decoder&&) noexcept;
     Mp3Decoder& operator=(Mp3Decoder&&) noexcept;
 
-bool open(const std::filesystem::path& filePath);
-    void close();
+    bool open(const std::filesystem::path& filePath) override;
+    void close() override;
 
-    bool isOpen() const;
-    int sampleRate() const; // Hz
-    int channels() const;   // 1 or 2
-    std::uint64_t totalSamples() const; // total samples in file (channels included)
+    bool isOpen() const override;
+    int sampleRate() const override; // Hz
+    int channels() const override;   // 1 or 2
+    std::uint64_t totalSamples() const override; // total samples in file (channels included)
 
     // Decode up to outFrames into outInterleaved.
     // outInterleaved must have at least outFrames * channels() samples.
     // Returns number of frames produced; 0 means end-of-stream.
-std::size_t decodeFrames(std::span<int16_t> outInterleaved, std::size_t outFrames);
+    std::size_t decodeFrames(std::span<int16_t> outInterleaved, std::size_t outFrames) override;
 
-const std::string& lastError() const;
+    const std::string& lastError() const override;
 
 private:
     struct Impl;

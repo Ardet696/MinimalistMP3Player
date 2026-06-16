@@ -4,14 +4,15 @@
 #include <atomic>
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 #include "../decode/SpectrumAnalyzer.h"
 #include "../decode/BpmDetector.h"
 
-class Mp3Decoder;
-class SdlAudioSink;
+class IAudioDecoder;
+class IAudioSink;
 class DecodeThread;
 class NotificationBus;
 template<typename T> class RingBuffer;
@@ -30,7 +31,12 @@ public:
         Paused
     };
 
-    explicit PlaybackEngine(NotificationBus* bus = nullptr);
+    using DecoderFactory = std::function<std::unique_ptr<IAudioDecoder>()>;
+    using SinkFactory    = std::function<std::unique_ptr<IAudioSink>(NotificationBus*)>;
+
+    explicit PlaybackEngine(NotificationBus* bus = nullptr,
+                            DecoderFactory decoderFactory = {},
+                            SinkFactory sinkFactory = {});
     ~PlaybackEngine();
 
     PlaybackEngine(const PlaybackEngine&) = delete;
@@ -92,9 +98,13 @@ private:
      */
     void stopPlayback();
 
+    // Factories for swappable decoder/sink implementations
+    DecoderFactory decoderFactory_;
+    SinkFactory sinkFactory_;
+
     // Playback components (owned by PlaybackEngine)
-    std::unique_ptr<Mp3Decoder> decoder_;
-    std::unique_ptr<SdlAudioSink> sink_;
+    std::unique_ptr<IAudioDecoder> decoder_;
+    std::unique_ptr<IAudioSink> sink_;
     std::unique_ptr<RingBuffer<int16_t>> ringBuffer_;
     std::unique_ptr<DecodeThread> decodeThread_;
 

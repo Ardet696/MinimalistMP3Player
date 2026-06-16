@@ -18,7 +18,7 @@ DecodeThread::~DecodeThread() {
     stop();
 }
 
-void DecodeThread::start(Mp3Decoder* decoder, RingBuffer<int16_t>* ringBuffer, std::size_t chunkFrames) {
+void DecodeThread::start(IAudioDecoder* decoder, RingBuffer<int16_t>* ringBuffer, std::size_t chunkFrames) {
     if (running_.load(std::memory_order_acquire)) {
         stop(); // Stop existing thread first
     }

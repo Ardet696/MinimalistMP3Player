@@ -7,10 +7,18 @@
 #include "DecodeThread.h"
 #include <algorithm>
 constexpr int SPECTRUM_BARS = 40;
-PlaybackEngine::PlaybackEngine(NotificationBus* bus)
-    : state_(State::Stopped)
-    ,sampleRate_(0)
-    ,channels_(0)
+PlaybackEngine::PlaybackEngine(NotificationBus* bus,
+                               DecoderFactory decoderFactory,
+                               SinkFactory sinkFactory)
+    : decoderFactory_(decoderFactory
+        ? std::move(decoderFactory)
+        : [] { return std::make_unique<Mp3Decoder>(); })
+    , sinkFactory_(sinkFactory
+        ? std::move(sinkFactory)
+        : [](NotificationBus* b) { return std::make_unique<SdlAudioSink>(b); })
+    , state_(State::Stopped)
+    , sampleRate_(0)
+    , channels_(0)
     , silentCallbacks_(0)
     , spectrumAnalyzer_(SPECTRUM_BARS)
     , samplesPlayed_(0)
@@ -28,7 +36,7 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
         stopPlayback();
     }
 
-    decoder_ = std::make_unique<Mp3Decoder>();
+    decoder_ = decoderFactory_();
     if (!decoder_->open(mp3File)) {
         if (bus_) bus_->push("Failed to open: " + mp3File.filename().string(), NotifyLevel::Error);
         decoder_.reset();
@@ -69,7 +77,7 @@ bool PlaybackEngine::load(const std::filesystem::path& mp3File) {
         return framesRead;
     };
 
-    sink_ = std::make_unique<SdlAudioSink>(bus_);
+    sink_ = sinkFactory_(bus_);
     if (!sink_->open(fmt, audioProvider, outputDeviceName_)) {
         if (bus_) bus_->push("Failed to open audio sink", NotifyLevel::Error);
         decoder_->close();
