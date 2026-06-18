@@ -45,10 +45,48 @@ set_target_properties(ftxui-component PROPERTIES
     INTERFACE_LINK_LIBRARIES ftxui-dom
 )
 
-find_package(SDL2 QUIET CONFIG)
-if(NOT SDL2_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+option(MP3PLAYER_VENDOR_SDL2 "Download and build SDL2 from source instead of using a system install" OFF)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(MP3PLAYER_ALLOW_VENDOR_SDL2 ${MP3PLAYER_VENDOR_SDL2})
+else()
+    set(MP3PLAYER_ALLOW_VENDOR_SDL2 ON)
+endif()
+
+if(NOT MP3PLAYER_VENDOR_SDL2)
+    find_package(SDL2 QUIET CONFIG)
+    if(NOT SDL2_FOUND)
+        find_package(PkgConfig QUIET)
+        if(PkgConfig_FOUND)
+            pkg_check_modules(SDL2 IMPORTED_TARGET sdl2)
+        endif()
+    endif()
+endif()
+
+if(NOT SDL2_FOUND AND NOT TARGET SDL2::SDL2 AND NOT TARGET PkgConfig::SDL2)
+    if(MP3PLAYER_ALLOW_VENDOR_SDL2)
+        message(STATUS "SDL2 not found; fetching and building it from source (release-2.32.10).")
+        include(FetchContent)
+        set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+        set(SDL_STATIC ON CACHE BOOL "" FORCE)
+        set(SDL_TEST OFF CACHE BOOL "" FORCE)
+        set(SDL2_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
+        FetchContent_Declare(
+            SDL2
+            GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+            GIT_TAG release-2.32.10
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(SDL2)
+    else()
+        message(FATAL_ERROR
+            "SDL2 not found. On Linux, install it from your distro so it links "
+            "against the system audio frameworks:\n"
+            "  Arch:          sudo pacman -S sdl2\n"
+            "  Ubuntu/Debian: sudo apt install libsdl2-dev\n"
+            "  Fedora:        sudo dnf install SDL2-devel\n"
+            "Or pass -DMP3PLAYER_VENDOR_SDL2=ON to build SDL2 from source anyway.")
+    endif()
 endif()
 
 add_executable(MP3Player
@@ -109,6 +147,8 @@ endif()
 
 if(TARGET SDL2::SDL2)
     target_link_libraries(MP3Player PRIVATE SDL2::SDL2)
+elseif(TARGET SDL2::SDL2-static)
+    target_link_libraries(MP3Player PRIVATE SDL2::SDL2-static)
 else()
     target_link_libraries(MP3Player PRIVATE PkgConfig::SDL2)
 endif()
