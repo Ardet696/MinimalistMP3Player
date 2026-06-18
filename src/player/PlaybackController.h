@@ -16,13 +16,7 @@ class NotificationBus;
  *
  * Coordinates PlaybackEngine, SongQueue, and AutoAdvanceManager.
  * Publishes events for UI/logging via PlaybackEventPublisher.
- *
- * This is the refactored AlbumPlayer with separated concerns:
- * - PlaybackEngine handles low-level audio
- * - SongQueue handles playlist and pre-warming
- * - AutoAdvanceManager handles auto-advance monitoring
- * - PlaybackEventPublisher handles event notifications
- */
+*/
 class PlaybackController {
 public:
     explicit PlaybackController(NotificationBus& bus, CommandQueue& cmdQueue);
@@ -82,7 +76,7 @@ private:
     void handleAutoAdvance();
     bool shouldAutoAdvance() const;
 
-    mutable PlaybackEngine engine_;
+    PlaybackEngine engine_;
     SongQueue queue_;
     AutoAdvanceManager autoAdvance_;
     PlaybackEventPublisher eventPublisher_;
