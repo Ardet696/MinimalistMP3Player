@@ -54,10 +54,31 @@ cmake --build build -j$(nproc)
 
 ### macOS
 
-Apple Clang does not support std::jthread. macOS users must install GCC via Homebrew:
+Apple Clang supports `std::jthread` (with `-std=c++20`) as of Apple Clang 21, so you can build natively with the system toolchain — no extra compiler required. Check your version:
 
 ```bash
-brew install gcc sdl2 cmake
+clang++ --version
+```
+
+If it reports Apple Clang 21 or newer (shipped with macOS 26.2+), just install CMake and build — SDL2 is downloaded and built automatically:
+
+```bash
+brew install cmake
+
+./scripts/build-ftxui.sh
+
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(sysctl -n hw.ncpu)
+
+./build/MP3Player
+```
+
+If your Apple Clang is older than 21, update the Command Line Tools (System Settings → General → Software Update, or `xcode-select --install` / `softwareupdate --list`) and re-check `clang++ --version`.
+
+If you cannot upgrade, fall back to GCC via Homebrew:
+
+```bash
+brew install gcc cmake
 
 ./scripts/build-ftxui.sh
 
