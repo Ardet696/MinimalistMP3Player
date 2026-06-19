@@ -117,6 +117,7 @@ add_executable(MP3Player
     src/player/PlaybackController.cpp
 
     src/audio/SdlAudioSink.cpp
+    src/audio/SdlAudioSubsystem.cpp
 
     src/decode/Mp3Decoder.cpp
     src/decode/SpectrumAnalyzer.cpp

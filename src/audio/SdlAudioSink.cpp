@@ -24,11 +24,9 @@ bool SdlAudioSink::open(const AudioFormat& fmt, FrameProvider provider, const st
         return false;
     }
 
-    if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
-        if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
-            if (bus_) bus_->push(std::string("SDL init failed: ") + SDL_GetError(), NotifyLevel::Error);
-            return false;
-        }
+    if (!audio_.ok()) {
+        if (bus_) bus_->push(std::string("SDL init failed: ") + SDL_GetError(), NotifyLevel::Error);
+        return false;
     }
 
     SDL_AudioSpec desired{};
@@ -100,10 +98,9 @@ int SdlAudioSink::getVolume() const {
 }
 
 std::vector<std::string> SdlAudioSink::listOutputDevices() {
-    if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
-        if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
-            return {};
-        }
+    SdlAudioSubsystem audio;
+    if (!audio.ok()) {
+        return {};
     }
 
     // Collect unique device names (ALSA often reports the same chipset name

@@ -10,6 +10,7 @@
 
 #include "../util/AudioFormat.h"
 #include "IAudioSink.h"
+#include "SdlAudioSubsystem.h"
 
 class NotificationBus;
 
@@ -22,6 +23,8 @@ public:
 
     SdlAudioSink(const SdlAudioSink&) = delete;
     SdlAudioSink& operator=(const SdlAudioSink&) = delete;
+    SdlAudioSink(SdlAudioSink&&) = delete;
+    SdlAudioSink& operator=(SdlAudioSink&&) = delete;
 
     bool open(const AudioFormat& fmt, FrameProvider provider, const std::string& deviceName = "", int desiredBufferFrames = 2048) override;
     void start() const override;
@@ -39,6 +42,7 @@ private:
     static void sdlCallback(void* userdata, std::uint8_t* stream, int len);
     void fill(std::uint8_t* stream, int len) const;
 
+    SdlAudioSubsystem audio_;
     std::uintptr_t device_ = 0; // SDL_AudioDeviceID stored portably
     AudioFormat fmt_{};
     FrameProvider provider_{};
