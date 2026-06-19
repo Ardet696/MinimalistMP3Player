@@ -12,6 +12,11 @@ public:
 
     DirectoryWatcher(IConfigService& config, ChangeCallback onChange);
 
+    DirectoryWatcher(const DirectoryWatcher&) = delete;
+    DirectoryWatcher& operator=(const DirectoryWatcher&) = delete;
+    DirectoryWatcher(DirectoryWatcher&&) = delete;
+    DirectoryWatcher& operator=(DirectoryWatcher&&) = delete;
+
 private:
     static std::set<std::string> snapshot(const std::string& root);
     void run(std::stop_token stop);

@@ -22,6 +22,8 @@ public:
     // Non copyable, non-movable
     AutoAdvanceManager(const AutoAdvanceManager&) = delete;
     AutoAdvanceManager& operator=(const AutoAdvanceManager&) = delete;
+    AutoAdvanceManager(AutoAdvanceManager&&) = delete;
+    AutoAdvanceManager& operator=(AutoAdvanceManager&&) = delete;
 
     /**
      * Start monitoring for auto-advance.

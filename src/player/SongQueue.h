@@ -30,6 +30,8 @@ public:
 
     SongQueue(const SongQueue&) = delete;
     SongQueue& operator=(const SongQueue&) = delete;
+    SongQueue(SongQueue&&) = delete;
+    SongQueue& operator=(SongQueue&&) = delete;
 
     /**
      * Load playlist of songs.
