@@ -61,7 +61,7 @@ case "$MODE" in
         build_and_run "$BUILD-tsan" \
             -DCMAKE_CXX_FLAGS="-fsanitize=thread -g" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
-        TSAN_OPTIONS=halt_on_error=1 run_tests "$BUILD-tsan" -R stress
+        TSAN_OPTIONS=halt_on_error=1 run_tests "$BUILD-tsan" -R "stress|unit"
         ;;
     all)
         "$0" ""

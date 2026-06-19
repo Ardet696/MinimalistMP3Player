@@ -89,6 +89,14 @@ if(NOT SDL2_FOUND AND NOT TARGET SDL2::SDL2 AND NOT TARGET PkgConfig::SDL2)
     endif()
 endif()
 
+if(TARGET SDL2::SDL2)
+    set(MP3PLAYER_SDL2_TARGET SDL2::SDL2)
+elseif(TARGET SDL2::SDL2-static)
+    set(MP3PLAYER_SDL2_TARGET SDL2::SDL2-static)
+else()
+    set(MP3PLAYER_SDL2_TARGET PkgConfig::SDL2)
+endif()
+
 add_executable(MP3Player
     src/main.cpp
     src/tui/ui.cpp
@@ -146,13 +154,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(MP3Player PRIVATE -pie -Wl,-z,relro,-z,now)
 endif()
 
-if(TARGET SDL2::SDL2)
-    target_link_libraries(MP3Player PRIVATE SDL2::SDL2)
-elseif(TARGET SDL2::SDL2-static)
-    target_link_libraries(MP3Player PRIVATE SDL2::SDL2-static)
-else()
-    target_link_libraries(MP3Player PRIVATE PkgConfig::SDL2)
-endif()
+target_link_libraries(MP3Player PRIVATE ${MP3PLAYER_SDL2_TARGET})
 target_link_libraries(MP3Player PRIVATE
     ftxui-component
     ftxui-dom
@@ -180,11 +182,19 @@ if(BUILD_TESTING)
         src/decode/BpmDetector.cpp
         src/decode/Mp3Decoder.cpp
         src/util/PathValidator.cpp
+        src/util/DirectoryWatcher.cpp
         src/service/ConfigService.cpp
         src/events/PlaybackEventPublisher.cpp
+        src/player/DecodeThread.cpp
+        src/player/AutoAdvanceManager.cpp
+        src/player/SongQueue.cpp
+        src/commands/CommandQueue.cpp
+        src/audio/SdlAudioSink.cpp
+        src/audio/SdlAudioSubsystem.cpp
     )
     target_compile_features(mp3player_core PUBLIC cxx_std_20)
     set_target_properties(mp3player_core PROPERTIES CXX_EXTENSIONS OFF)
+    target_link_libraries(mp3player_core PUBLIC ${MP3PLAYER_SDL2_TARGET})
 
     add_executable(unit_tests
         tests/unit/RingBufferTest.cpp
@@ -193,11 +203,18 @@ if(BUILD_TESTING)
         tests/unit/BpmDetectorTest.cpp
         tests/unit/PathValidatorTest.cpp
         tests/unit/ConfigServiceTest.cpp
+        tests/unit/Mp3DecoderRaiiTest.cpp
+        tests/unit/DecodeThreadTest.cpp
+        tests/unit/ThreadLifecycleTest.cpp
+        tests/unit/SdlAudioSinkTest.cpp
     )
     target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain mp3player_core)
     target_compile_features(unit_tests PRIVATE cxx_std_20)
     target_compile_options(unit_tests PRIVATE
         $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
+    )
+    target_compile_definitions(unit_tests PRIVATE
+        FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures"
     )
 
     add_executable(stress_tests

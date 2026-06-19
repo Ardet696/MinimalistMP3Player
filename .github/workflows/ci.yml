@@ -100,10 +100,10 @@ jobs:
       - name: Build
         run: cmake --build build -j$(nproc)
 
-      - name: Stress tests under TSan
+      - name: Stress and lifecycle tests under TSan
         env:
           TSAN_OPTIONS: halt_on_error=1
-        run: cd build && ctest --output-on-failure -R stress
+        run: cd build && ctest --output-on-failure -R "stress|unit"
 
   test-macos:
     runs-on: macos-latest
