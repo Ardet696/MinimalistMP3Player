@@ -11,6 +11,10 @@ struct Mp3Decoder::Impl {
     int hz = 0;
     int ch = 0;
     std::string err;
+
+    ~Impl() {
+        if (open) mp3dec_ex_close(&dec);
+    }
 };
 
 Mp3Decoder::Mp3Decoder() : impl_(std::make_unique<Impl>()) {}
